@@ -27,8 +27,9 @@ In the beginning of the script you can select:
 * `GOAS =` 0 (don't change, work in progress)
 * `consider_OSM =` 0 (don't use OSM data in study region) or 1 (clip OSM data to study region). Currently, only railways are considered.
 * `EPSG_manual =` *'EPSG-Code'* (insert EPSG code like 3035 for Europe if you want to set it manually instead of using the calculated UTM zone)
+
 Moreover, you have to select your study region. It has to be an official administrative region from GADM.org:
-* `country_code =` string (3 letters ISO code)
-* `gadm_level =` int (administrative level)
-* `region_name =` string (name of the region)
+* `country_code =` *'country_code_as_string'* (3 letters ISO code)
+* `gadm_level =` *int* (administrative level)
+* `region_name =` *'region_name_as_string'* (name of the region)
 Ideally you download the geopackage of the country you are interested in and load it in QGIS to find the right `gadm_level` and `region_name`.
