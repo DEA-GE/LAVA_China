@@ -49,7 +49,7 @@ start_time = time.time()
 dirname = os.path.dirname(__file__)
 data_path = os.path.join(dirname, 'Raw_Spatial_Data')
 landcoverRasterPath = os.path.join(data_path, "PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif")
-demRasterPath = os.path.join(data_path, 'gebco','gebco_DEU.tif')
+demRasterPath = os.path.join(data_path, 'gebco','gebco_cutout.tif')
 
 #oceanPath = os.path.join(data_path, "GOaS_v1_20211214_gpkg", "goas_v01.gpkg")
 #OSM_path = os.path.join(data_path, "OSM")
@@ -126,7 +126,7 @@ if GOAS == 1:
     country_name_clean = unidecode(country_name)
     country_name_clean = country_name_clean.replace(" ", "")
     country_name_clean = country_name_clean.replace(".", "")
-    country_name_clean = country_name_clean.replace("'", "")
+    country_name_clean = country_name_clean.replace("'", "") 
 
     # Save oceans to gpkg for spider
     GOAS_country.to_file(os.path.join(spider_output_dir, f'{country_name_clean}_oceans.gpkg'), driver='GPKG', encoding='utf-8')

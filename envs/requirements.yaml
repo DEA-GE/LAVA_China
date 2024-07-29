@@ -13,3 +13,6 @@ dependencies:
   - numpy
   - pygadm
   - shapely
+  - jupyter
+  - ipython
+  - ipykernel
