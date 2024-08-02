@@ -7,7 +7,7 @@
 #product user manual with legends: https://land.copernicus.eu/en/technical-library/global-dynamic-land-cover-product-user-manual-v3.0/@@download/file
 
 colors_dict_copernicus_global_coll3 = {
-    0: (0.15686275, 0.15686275, 0.15686275),  # No input data available
+    255: (0.15686275, 0.15686275, 0.15686275),  # No input data available
     111: (0.34509804, 0.28235294, 0.12156863),  # Closed forest, evergreen needle leaf
     113: (0.43921569, 0.4, 0.24313725),  # Closed forest, deciduous needle leaf
     112: (0.0, 0.6, 0.0),  # Closed forest, evergreen, broad leaf
@@ -33,7 +33,7 @@ colors_dict_copernicus_global_coll3 = {
 }
 
 legend_dict_copernicus_global_coll3 = {
-    0: 'No input data available',
+    255: 'No input data available',
     111: 'Closed forest, evergreen needle leaf',
     113: 'Closed forest, deciduous needle leaf',
     112: 'Closed forest, evergreen, broad leaf',

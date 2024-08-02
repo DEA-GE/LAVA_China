@@ -31,14 +31,15 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 #-------data config-------
 only_mainland = 0
-GOAS = 0
-consider_OSM = 0
+GOAS = 0 
+consider_OSM_railways = 1
+consider_OSM_roads = 1
 EPSG_manual = ''
 #----------------------------
 ############### Define study region ############### use geopackage from gadm.org to inspect in QGIS
-country_code='PRT' #PRT  #Städteregion Aachen in level 2 #Porto in level 1
-gadm_level=1
-region_name='Porto'  #needs a name (if country is studied, then use country name)
+country_code='DEU' #PRT  #Städteregion Aachen in level 2 #Porto in level 1 #Elbe-Elster in level 2
+gadm_level=2
+region_name='Elbe-Elster'  #needs a name (if country is studied, then use country name)
 ##################################################
 
 
@@ -51,8 +52,8 @@ data_path = os.path.join(dirname, 'Raw_Spatial_Data')
 landcoverRasterPath = os.path.join(data_path, "PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif")
 demRasterPath = os.path.join(data_path, 'gebco','gebco_cutout.tif')
 
-#oceanPath = os.path.join(data_path, "GOaS_v1_20211214_gpkg", "goas_v01.gpkg")
-#OSM_path = os.path.join(data_path, "OSM")
+OSM_country_path = os.path.join(data_path, 'OSM', 'BerlinBrandenburg')#, country_code)
+
 
 # Read shapefile of region
 #regionPath = os.path.join(data_path, 'region.geojson')
@@ -106,60 +107,32 @@ region.to_crs(epsg=EPSG, inplace=True) #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 print(f'region projected to local CRS: {region.crs}')
 region.to_file(os.path.join(glaes_output_dir, f'{region_name_clean}_{EPSG}.geojson'), driver='GeoJSON', encoding='utf-8')
 
-if GOAS == 1:
-    # Buffer the "country" polygon by 1000 meters to create a buffer zone
-    country_buffer = country['geometry'].buffer(10000)
-    country_buffer.make_valid()
-    country_buffer.to_file(os.path.join(glaes_output_dir, f'{country_name_clean}_buff.geojson'), driver='GeoJSON', encoding='utf-8')
-
-    # Reproject GOAS to UTM zone of country
-    GOAS = gpd.read_file(oceanPath)
-    country_buffer = country_buffer.to_crs(epsg=4326)
-    GOAS.to_crs(epsg=4326, inplace=True)
-    GOAS_country = gpd.clip(GOAS, country_buffer)
-    GOAS_country['geometry'].make_valid()
-    # Reconvert to country CRS? Check it makes no difference in distance outputs. GLAES seems happy with 4326.
-    GOAS_country.to_crs(epsg=EPSG, inplace=True)
-    GOAS_country.to_file(os.path.join(glaes_output_dir, f'{country_name_clean}_oceans.geojson'), driver='GeoJSON', encoding='utf-8')
-
-    # Get country names without accents, spaces, apostrophes, or periods
-    country_name_clean = unidecode(country_name)
-    country_name_clean = country_name_clean.replace(" ", "")
-    country_name_clean = country_name_clean.replace(".", "")
-    country_name_clean = country_name_clean.replace("'", "") 
-
-    # Save oceans to gpkg for spider
-    GOAS_country.to_file(os.path.join(spider_output_dir, f'{country_name_clean}_oceans.gpkg'), driver='GPKG', encoding='utf-8')
-
-    # Save OSM layers in 4236 gpkgs for spider
-    OSM_country_path = os.path.join(OSM_path, f"{country_name_clean}")
-
-
 # Convert country back to EPSC 4326 to trim landcover and save this version for SPIDER as well
 region.to_crs(epsg=4326, inplace=True)
-#region.to_file(os.path.join(spider_output_dir, f'{country_name_clean}.gpkg'), driver='GPKG', encoding='utf-8')
 
-if consider_OSM == 1:
-    OSM_country_path = os.path.join(data_path, 'OSM', country_code)
 
+if consider_OSM_railways == 1:
+    print('processing railways')
     #read files
-    #OSM_waterbodies = gpd.read_file(os.path.join(OSM_country_path, 'gis_osm_water_a_free_1.shp'))
-    #OSM_waterbodies.to_file(os.path.join(spider_output_dir, f'{country_name_clean}_waterbodies.gpkg'), driver='GPKG', encoding='utf-8')
     OSM_railways = gpd.read_file(os.path.join(OSM_country_path, f'gis_osm_railways_free_1.shp'))
-    #OSM_roads = gpd.read_file(os.path.join(OSM_country_path, f'gis_osm_roads_free_1.shp'))
-    #OSM_roads.to_file(os.path.join(spider_output_dir, f'{country_name_clean}_roads.gpkg'), driver='GPKG', encoding='utf-8')
-    #OSM_waterways = gpd.read_file(os.path.join(OSM_country_path, 'gis_osm_waterways_free_1.shp'))
-    #OSM_waterways.to_file(os.path.join(spider_output_dir, f'{country_name_clean}_waterways.gpkg'), driver='GPKG', encoding='utf-8')
-
     #clip files 
     OSM_railways_clipped = gpd.clip(OSM_railways, region)
-    #OSM_roads_clipped = gpd.clip(OSM_roads, region)
-
     #reproject and save files
     OSM_railways_clipped.to_crs(epsg=EPSG, inplace=True)
     OSM_railways_clipped.to_file(os.path.join(glaes_output_dir, f'OSM_railways_{region_name_clean}_{EPSG}.geojson'), driver='GeoJSON', encoding='utf-8')
-    #OSM_roads_clipped.to_crs(epsg=EPSG, inplace=True)
-    #OSM_roads_clipped.to_file(os.path.join(glaes_output_dir, f'OSM_roads_{region_name_clean}_{EPSG}.geojson'), driver='GeoJSON', encoding='utf-8')
+
+if consider_OSM_roads == 1:
+    print('processing roads')
+    OSM_roads = gpd.read_file(os.path.join(OSM_country_path, f'gis_osm_roads_free_1.shp'))
+    OSM_roads_clipped = gpd.clip(OSM_roads, region)
+    OSM_roads_clipped.to_crs(epsg=EPSG, inplace=True)
+    #filter roads. see https://www.geofabrik.de/data/geofabrik-osm-gis-standard-0.7.pdf page19
+    OSM_roads_clipped_filtered = OSM_roads_clipped[OSM_roads_clipped['code'].isin([5111, 5112, 5113, 5114, 5115, 5121, 5122, 5125, 5131, 5132, 5133, 5134, 5135])]
+    #OSM_roads_clipped_filtered = OSM_roads_clipped[~OSM_roads_clipped['code'].isin([5141])] #keep all roads except with code listed (eg 5141)
+    #reset index for clean, zero-based index of filtered data
+    OSM_roads_clipped_filtered = OSM_roads_clipped_filtered.reset_index(drop=True)
+    #save file
+    OSM_roads_clipped_filtered.to_file(os.path.join(glaes_output_dir, f'OSM_roads_{region_name_clean}_{EPSG}.geojson'), driver='GeoJSON', encoding='utf-8')
 
 
 
