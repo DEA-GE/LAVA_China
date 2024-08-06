@@ -225,7 +225,7 @@ except:
 
 
 
-def reproj_match(infile, match, outfile): #source: https://pygis.io/docs/e_raster_resample.html
+def reproj_match(infile, match, resampling_method, outfile): #source: https://pygis.io/docs/e_raster_resample.html
     """Reproject a file to match the shape and projection of existing raster. 
     
     Parameters
@@ -234,6 +234,12 @@ def reproj_match(infile, match, outfile): #source: https://pygis.io/docs/e_raste
     match : (string) path to raster with desired shape and projection 
     outfile : (string) path to output file tif
     """
+    resampling_options = {
+        'nearest': Resampling.nearest,
+        'bilinear': Resampling.bilinear,
+        'cubic': Resampling.cubic
+    }
+
     # open input
     with rasterio.open(infile) as src:
         src_transform = src.transform
@@ -270,12 +276,12 @@ def reproj_match(infile, match, outfile): #source: https://pygis.io/docs/e_raste
                     src_crs=src.crs,
                     dst_transform=dst_transform,
                     dst_crs=dst_crs,
-                    resampling=Resampling.nearest)
+                    resampling=resampling_options[resampling_method])
 
 infile=os.path.join(glaes_output_dir, f'DEM_{region_name_clean}_EPSG{EPSG}.tif')
 match=os.path.join(glaes_output_dir, f'landcover_{region_name_clean}_EPSG{EPSG}.tif')
 outfile=os.path.join(glaes_output_dir, f'DEM_{region_name_clean}_EPSG{EPSG}_resampled.tif')
-reproj_match(infile, match, outfile)
+reproj_match(infile, match, 'bilinear', outfile)
 
 
 print("Done!")
