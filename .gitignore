@@ -3,9 +3,10 @@
 !envs/requirements.yaml
 !utils
 !utils/legends.py
+!.gitignore
+!README.md
+!spatial_data_prep_JOM.py
 !data_exploration.ipynb
 !GLAES_Aachen.ipynb
 !GLAES_Aachen_test_data.ipynb
-!spatial_data_prep_JOM.py
-!.gitignore
-!README.md
+!Atlite_custom_region.ipynb
