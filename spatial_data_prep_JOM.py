@@ -27,33 +27,39 @@ from rasterio.mask import mask
 from shapely.geometry import mapping
 from unidecode import unidecode
 from rasterio.warp import calculate_default_transform, reproject, Resampling
+import richdem
 from utils.data_preprocessing import *
 
 #https://www.earthenv.org/topography
 
 #-------data config------- 
-consider_OSM_railways = 0
+consider_OSM_railways = 1
 consider_OSM_roads = 0
-EPSG_manual = '' #if None use empty string
-custom_polygon_filename = 'Aceh_single.geojson' #if None use empty string           'Aceh_single.geojson'
+consider_airports = 1 
+EPSG_manual = ''  #if None use empty string
 #----------------------------
 ############### Define study region ############### use geopackage from gadm.org to inspect in QGIS
+region_name='Aceh' #always needed (if country is studied, then use country name)
+
+OSM_folder_name = 'Sumatra' #usually same as country_code, only needed if OSM is to be considered
+
+#use GADM boundary
 country_code='AUT' #    #PRT  #Städteregion Aachen in level 2 #Porto in level 1 #Elbe-Elster in level 2
-OSM_folder_name = 'BerlinBrandenburg' #usually same as country_code, only needed if OSM railways or roads are considered
 gadm_level=2
-region_name='Aceh'  #needs a name (if country is studied, then use country name)
+#or use custom region
+custom_polygon_filename = 'Aceh_single.geojson' #if None use empty string           'Aceh_single.geojson'
 ##################################################
 
 
 # Record the starting time
 start_time = time.time()
 
-# Get paths to data files
+# Get paths to data files or folders
 dirname = os.path.dirname(__file__)
 data_path = os.path.join(dirname, 'Raw_Spatial_Data')
 landcoverRasterPath = os.path.join(data_path, "PROBAV_LC100_global_v3.0.1_2019-nrt_Discrete-Classification-map_EPSG-4326.tif")
 demRasterPath = os.path.join(data_path, 'gebco','gebco_cutout.tif')
-if consider_OSM_railways == 1 or consider_OSM_roads == 1:
+if consider_OSM_railways == 1 or consider_OSM_roads == 1 or consider_airports == 1:
     OSM_country_path = os.path.join(data_path, 'OSM', OSM_folder_name) 
 
 
@@ -92,7 +98,7 @@ region.to_file(os.path.join(glaes_output_dir, f'{region_name_clean}_4326.geojson
 representative_point = region.representative_point().iloc[0]
 latitude, longitude = representative_point.y, representative_point.x
 EPSG = int(32700 - round((45 + latitude) / 90, 0) * 100 + round((183 + longitude) / 6, 0))
-#if EPSG was set manuel in the beginning then use that one
+#if EPSG was set manual in the beginning then use that one
 if EPSG_manual:
     EPSG=int(EPSG_manual)
 
@@ -112,12 +118,14 @@ region.to_crs(epsg=4326, inplace=True)
 
 if consider_OSM_railways == 1:
     print('processing railways')
-    OSM_railways = OSM_read_clip_reproject(OSM_country_path, 'railways', region, EPSG)
+    OSM_file = gpd.read_file(os.path.join(OSM_country_path, f'gis_osm_railways_free_1.shp'))
+    OSM_railways = OSM_clip_reproject(OSM_file, region, EPSG)
     OSM_railways.to_file(os.path.join(glaes_output_dir, f'OSM_railways_{region_name_clean}_{EPSG}.geojson'), driver='GeoJSON', encoding='utf-8')
 
 if consider_OSM_roads == 1:
     print('processing roads')
-    OSM_roads = OSM_read_clip_reproject(OSM_country_path, 'roads', region, EPSG)
+    OSM_file = gpd.read_file(os.path.join(OSM_country_path, f'gis_osm_roads_free_1.shp'))
+    OSM_roads = OSM_clip_reproject(OSM_file, region, EPSG)
     #filter roads. see https://www.geofabrik.de/data/geofabrik-osm-gis-standard-0.7.pdf page19
     OSM_roads_filtered = OSM_roads[OSM_roads['code'].isin([5111, 5112, 5113, 5114, 5115, 5121, 5122, 5125, 5131, 5132, 5133, 5134, 5135])]
     #OSM_roads_clipped_filtered = OSM_roads_clipped[~OSM_roads_clipped['code'].isin([5141])] #keep all roads except with code listed (eg 5141)
@@ -125,6 +133,17 @@ if consider_OSM_roads == 1:
     OSM_roads_filtered.reset_index(drop=True, inplace=True)
     #save file
     OSM_roads_filtered.to_file(os.path.join(glaes_output_dir, f'OSM_roads_{region_name_clean}_{EPSG}.geojson'), driver='GeoJSON', encoding='utf-8')
+
+if consider_airports == 1:
+    print('processing airports')
+    OSM_file = gpd.read_file(os.path.join(OSM_country_path, f'gis_osm_transport_a_free_1.shp'))
+    OSM_transport = OSM_clip_reproject(OSM_file, region, EPSG) #all transport fclasses from the OSM file 
+    OSM_airports = OSM_transport[OSM_transport['code'].isin([5651, 5652])] #5651: large airport, 5652: small airport or airfield
+    # Check if OSM_airports is not empty before saving
+    if not OSM_airports.empty:
+        OSM_airports.to_file(os.path.join(glaes_output_dir, f'OSM_airports_{region_name_clean}_{EPSG}.geojson'), driver='GeoJSON', encoding='utf-8')
+    else:
+        print("No airports found in the region. File not saved.")    
 
 
 print('landcover')
@@ -140,6 +159,11 @@ try:
     match=os.path.join(glaes_output_dir, f'landcover_{region_name_clean}_EPSG{EPSG}.tif')
     outfile=os.path.join(glaes_output_dir, f'DEM_{region_name_clean}_EPSG{EPSG}_resampled.tif')
     reproj_match(infile, match, 'bilinear', outfile)
+
+    #create slope map (https://www.earthdatascience.org/tutorials/get-slope-aspect-from-digital-elevation-model/)
+    dem_file = richdem.LoadGDAL(os.path.join(glaes_output_dir, f'DEM_{region_name_clean}_EPSG{EPSG}_resampled.tif'))
+    slope = richdem.TerrainAttribute(dem_file, attrib='slope_degrees')
+    richdem.SaveGDAL(os.path.join(glaes_output_dir, f'slope_{region_name_clean}_EPSG{EPSG}_resampled.tif'), slope)
 
 except:
     print('Input shapes do not overlap raster. DEM raster for study region is not correct')

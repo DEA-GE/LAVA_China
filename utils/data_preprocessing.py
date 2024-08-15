@@ -9,19 +9,17 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 
 
-def OSM_read_clip_reproject(OSM_folder_path, railways_roads, gdf, target_crs):
+def OSM_clip_reproject(OSM_file, gdf, target_crs):
     """
-    Reads OSM shapefile, clips it to the extent of a GeoPandas DataFrame and reprojects it to a given CRS.
+    Clips OSM file to the extent of a GeoPandas DataFrame and reprojects it to a given CRS.
 
-    :param OSM_folder_path: Path to the folder with all OSM shapefiles.
-    :railways_roads: string "railways" or "roads" to select which file is used.
+    
     :param gdf: The GeoPandas DataFrame to use for clipping the shapefile.
     :target_crs: The target CRS to reproject the shapefile to (e.g., 'EPSG:3035').
     """
-    #read files
-    OSM_transport_infra = gpd.read_file(os.path.join(OSM_folder_path, f'gis_osm_{railways_roads}_free_1.shp'))
+    
     #clip files 
-    OSM_transport_infra_clipped = gpd.clip(OSM_transport_infra, gdf)
+    OSM_transport_infra_clipped = gpd.clip(OSM_file, gdf)
     #reproject and save files
     OSM_transport_infra_clipped.to_crs(epsg=target_crs, inplace=True)
     
@@ -39,7 +37,7 @@ def clip_reproject_raster(input_raster_path, region_name_clean, gdf, landcover_e
         :param input_raster_path: Path to the input TIFF raster file.
         :param region_name_clean: in main script cleaned region name
         :param gdf: The GeoPandas DataFrame to use for clipping the raster.
-        :param landcover_elevation: string with "landcover" or "elevation".
+        :param landcover_elevation: string with "landcover" or "elevation". 
         :param target_crs: The target CRS to reproject the raster to (e.g., 'EPSG:3035').
         :param resampling_method: resampling method to be used (string)
         :param output_dir: output directory (defined in main script)
