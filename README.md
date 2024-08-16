@@ -77,5 +77,9 @@ In the second code cell just put the name of your study region as the folder wit
 You need to run this notebook also to get the land use codes and the pixel size stored in seperate .json files.
 
 
+## 4. Land eligibility
+
+
+
 
 
