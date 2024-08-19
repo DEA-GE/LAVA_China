@@ -22,6 +22,7 @@ import geopandas as gpd
 import json
 import pickle
 import rasterio
+import numpy as np
 import pygadm
 from rasterio.mask import mask
 from shapely.geometry import mapping
@@ -39,15 +40,15 @@ consider_airports = 0
 EPSG_manual = ''  #if None use empty string
 #----------------------------
 ############### Define study region ############### use geopackage from gadm.org to inspect in QGIS
-region_name='Aceh' #always needed (if country is studied, then use country name)
+region_name='Elbe-Elster' #always needed (if country is studied, then use country name)
 
-OSM_folder_name = 'Sumatra' #usually same as country_code, only needed if OSM is to be considered
+OSM_folder_name = 'BerlinBrandenburg' #usually same as country_code, only needed if OSM is to be considered
 
 #use GADM boundary
-country_code='AUT' #    #PRT  #Städteregion Aachen in level 2 #Porto in level 1 #Elbe-Elster in level 2
+country_code='DEU' #    #PRT  #Städteregion Aachen in level 2 #Porto in level 1 #Elbe-Elster in level 2 #Zell am See in level 2
 gadm_level=2
 #or use custom region
-custom_polygon_filename = 'Aceh_single.geojson' #if None use empty string           'Aceh_single.geojson'
+custom_polygon_filename = '' #if None use empty string           'Aceh_single.geojson'
 ##################################################
 
 
@@ -94,7 +95,7 @@ print(f'region geojson loaded CRS: {region.crs}')
 region.to_file(os.path.join(glaes_output_dir, f'{region_name_clean}_4326.geojson'), driver='GeoJSON', encoding='utf-8')
 
 
-# calculate UTM zone based on representative point of country
+# calculate UTM zone based on representative point of country 
 representative_point = region.representative_point().iloc[0]
 latitude, longitude = representative_point.y, representative_point.x
 EPSG = int(32700 - round((45 + latitude) / 90, 0) * 100 + round((183 + longitude) / 6, 0))
@@ -165,13 +166,33 @@ try:
     slope = richdem.TerrainAttribute(dem_file, attrib='slope_degrees')
     richdem.SaveGDAL(os.path.join(glaes_output_dir, f'slope_{region_name_clean}_EPSG{EPSG}_resampled.tif'), slope)
 
-    #create slope map (https://www.earthdatascience.org/tutorials/get-slope-aspect-from-digital-elevation-model/)
+    #create aspect map (https://www.earthdatascience.org/tutorials/get-slope-aspect-from-digital-elevation-model/)
     dem_file = richdem.LoadGDAL(os.path.join(glaes_output_dir, f'DEM_{region_name_clean}_EPSG{EPSG}_resampled.tif'))
     aspect = richdem.TerrainAttribute(dem_file, attrib='aspect')
     richdem.SaveGDAL(os.path.join(glaes_output_dir, f'aspect_{region_name_clean}_EPSG{EPSG}_resampled.tif'), aspect)
 
-except:
-    print('Input shapes do not overlap raster. DEM raster for study region is not correct')
+    #create map showing pixels with slope bigger X and aspect between Y and Z (north facing with slope where you would not build PV)
+    condition = (slope > 10) & ((aspect >= 310) | (aspect <= 50))
+    result = np.where(condition, 1, 0) # Create a new raster with the filtered results
+    with rasterio.open(os.path.join(glaes_output_dir, f'slope_{region_name_clean}_EPSG{EPSG}_resampled.tif')) as src:
+        slope = src.read(1)
+        profile = src.profile
+    profile.update(dtype=rasterio.float32, count=1, nodata=0) # Update the profile for the output raster
+    
+    if result.sum() > 0:
+        # Write the result to a new raster file
+        with rasterio.open(os.path.join(glaes_output_dir, f'north_facing_{region_name_clean}_EPSG{EPSG}_resampled.tif'), 'w', **profile) as dst:
+            dst.write(result.astype(rasterio.float32), 1)
+    if result.sum() == 0:
+        print('no north-facing pixel exceeding threshold slope')
+
+except Exception as e:
+    print(e)
+    print('Something went wrong with DEM')
+
+
+#save all files also into one geopackage
+
 
 
 print("Done!")
