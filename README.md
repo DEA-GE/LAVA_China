@@ -9,7 +9,7 @@ First, all needed data is preprocessed to bring it into the right format. This d
 ## 0. Files setup
 __a) clone the repository:__
 
-`% git clone https://github.com/jome1/LAAVA.git`
+`% git clone https://github.com/jome1/LAVA.git`
 
 After cloning, navigate to the top-level folder of the repo.
 
@@ -21,7 +21,7 @@ The Python package requirements to use these tools are in the `requirements.yaml
 
 Then activate this new environment using
 
-`conda activate laava`
+`conda activate lava`
 
 You are now ready to run the scripts in this repository.
 
