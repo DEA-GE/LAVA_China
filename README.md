@@ -86,7 +86,7 @@ You need to run this notebook also to get the land use codes and the pixel size 
 
 
 ## 4. Land eligibility
-
+With the JupyterNotebook `Atlite_custom_region.ipynb` you can finally derive the available area of your study region. Set the name of your region with `region_name` and if necessary also set the EPSG code with `EPSG_custom` if needed or leave it as an empty string. You can then run all cells. You can use the predefined exclusions or customize it yourself.
 
 
 
