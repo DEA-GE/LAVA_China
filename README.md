@@ -9,19 +9,19 @@ First, all needed data is preprocessed to bring it into the right format. This d
 ## 0. Files setup
 __a) clone the repository:__
 
-`% git clone https://github.com/jome1/land-analysis-and-eligibility.git`
+`% git clone https://github.com/jome1/LAAVA.git`
 
 After cloning, navigate to the top-level folder of the repo.
 
 __b) install python dependencies__
 
-The Python package requirements to use these tools are in the `requirements.yml` file. You can install these requirements in a new environment using `conda`:
+The Python package requirements to use these tools are in the `requirements.yaml` file. You can install these requirements in a new environment using `conda`:
 
 `conda env create -f envs/requirements.yaml`
 
 Then activate this new environment using
 
-`conda activate land_analysis`
+`conda activate laava`
 
 You are now ready to run the scripts in this repository.
 
