@@ -40,6 +40,7 @@ You can also use landcover data from a different data source (then the coloring 
 * [OpenStreetMap Shapefile](https://download.geofabrik.de/) of the country where your study region is located. Click on the relevant continent and then country to download the ´.shp.zip´. Somtimes you can go even more granular by clicking on the country. The best is, to use the smallest available area where your study region is still inside to save storage space. Be aware of the files naming. Unzip and put the downloaded OSM data folder inside the __"OSM"__-folder.  
 The OSM data is used to extract railways, roads and airports. Be aware, that these files can quickly become big making the calculations slow. Handle roads with caution. Often there are many roads which can become big files.
 
+> [!NOTE] 
 For a sophisticated potential analysis more data is needed like specific local exclusion zones or protected areas. This depends on the study region and data research as well as engagement with local authorities is needed. A good global dataset for protected areas is [protected planet](https://www.protectedplanet.net/en/thematic-areas/wdpa?tab=WDPA). Moreover, waterways and water areas could be used from OSM Data, because land cover data does not always recognize waterbodies.
 
 
