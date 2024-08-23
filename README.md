@@ -3,6 +3,10 @@
 This repo provides tools to calculate the available area in a user defined study region for building renewable energies like solar PV and wind onshore.
 First, all needed data is preprocessed to bring it into the right format. This data can be analyzed to get a better understanding of the study region. Finally, the land eligibility analysis is done with [`atlite`](https://github.com/PyPSA/atlite) or [`GLAES`](https://github.com/FZJ-IEK3-VSA/glaes) (GLAES does not work fully yet).
 
+Fetch landcover and elevation data via API (ESAworldcover and copernicus_30m):
+* Terrascope API: [API documentation](https://vitobelgium.github.io/terracatalogueclient/api.html), [ESAworldvcover Product](https://docs.terrascope.be/#/DataProducts/WorldCover/WorldCover)
+* [openEO API](https://openeo.org/): [API documentation]([https://openeo.org/documentation/1.0/python/#installation](https://open-eo.github.io/openeo-python-client/))
+
 # :construction: :warning: Work in progress! :construction_worker:
 
 
