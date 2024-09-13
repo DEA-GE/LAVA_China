@@ -30,28 +30,32 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 import richdem
 from utils.data_preprocessing import *
 
-#https://www.earthenv.org/topography
 
+with open("config.yaml", "r") as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 #-------data config------- 
-landcover_dem_source = 'file'   #'file' or 'openeo'
-consider_railways = 0
-consider_roads = 0
-consider_airports = 0
-consider_waterbodies = 0 
-EPSG_manual = ''  #if None use empty string
+landcover_source = config['landcover_source']
+consider_railways = config['consider_railways']
+consider_roads = config['consider_roads']
+consider_airports = config['consider_airports']
+consider_waterbodies = config['consider_waterbodies'] 
+EPSG_manual = config['EPSG_manual']  #if None use empty string
 #----------------------------
 ############### Define study region ############### use geopackage from gadm.org to inspect in QGIS
-region_name='Elbe-Elster' #always needed (if country is studied, then use country name)
-
-OSM_folder_name = 'BerlinBrandenburg' #usually same as country_code, only needed if OSM is to be considered
+region_name = config['region_name'] #always needed (if country is studied, then use country name)
+OSM_folder_name = config['OSM_folder_name'] #usually same as country_code, only needed if OSM is to be considered
 
 #use GADM boundary
-country_code='DEU' #    #PRT  #Städteregion Aachen in level 2 #Porto in level 1 #Elbe-Elster in level 2 #Zell am See in level 2
-gadm_level=2
+country_code = config['country_code']    #PRT  #Städteregion Aachen in level 2 #Porto in level 1 #Elbe-Elster in level 2 #Zell am See in level 2
+gadm_level = config['gadm_level']
 #or use custom region
-custom_polygon_filename = '' #if None use empty string           'Aceh_single.geojson'
+custom_polygon_filename = config['custom_polygon_filename'] #if None use empty string           'Aceh_single.geojson'
 ##################################################
+#north facing pixels
+X = config['X']
+Y = config['Y']
+Z = config['Z']
 
 
 # Record the starting time
@@ -174,7 +178,7 @@ if consider_waterbodies == 1:
 
 
 print('landcover')
-if landcover_dem_source == 'openeo':
+if landcover_source == 'openeo':
     connection = openeo.connect(url="openeo.dataspace.copernicus.eu").authenticate_oidc()
 
     output_path = os.path.join(glaes_output_dir, f'landcover_{region_name_clean}_EPSG{EPSG}.tif')
@@ -190,7 +194,7 @@ if landcover_dem_source == 'openeo':
     #download
     landcover.download(output_path)
 
-if landcover_dem_source == 'file':
+if landcover_source == 'file':
     clip_reproject_raster(landcoverRasterPath, region_name_clean, region, 'landcover', EPSG, 'nearest', glaes_output_dir)
 
 
@@ -198,7 +202,7 @@ print('DEM') #block comment: SHIFT+ALT+A, multiple line comment: STRG+#
 try:
     # test to use DEM data via openeo, only works when land cover is also fetched from openEO because DEM is co-registered on the back-end to the landcover 
     # (current implementation: use GEBCO DTM file)
-    # if landcover_dem_source == 'openeo':
+    # if landcover_source == 'openeo':
     #     connection = openeo.connect(url="openeo.dataspace.copernicus.eu").authenticate_oidc()
 
     #     output_path = os.path.join(glaes_output_dir, f'DEM_{region_name_clean}_EPSG{EPSG}_resampled.tif')
@@ -214,7 +218,7 @@ try:
     #     #download
     #     dem_registered.download(output_path)
     
-    # if landcover_dem_source == 'file':
+    # if landcover_source == 'file':
 
     clip_reproject_raster(demRasterPath, region_name_clean, region, 'DEM', EPSG, 'bilinear', glaes_output_dir)
 
@@ -236,7 +240,7 @@ try:
     richdem.SaveGDAL(os.path.join(glaes_output_dir, f'aspect_{region_name_clean}_EPSG{EPSG}_resampled.tif'), aspect)
 
     #create map showing pixels with slope bigger X and aspect between Y and Z (north facing with slope where you would not build PV)
-    condition = (slope > 10) & ((aspect >= 310) | (aspect <= 50))
+    condition = (slope > X) & ((aspect >= Y) | (aspect <= Z))
     result = np.where(condition, 1, 0) # Create a new raster with the filtered results
     with rasterio.open(os.path.join(glaes_output_dir, f'slope_{region_name_clean}_EPSG{EPSG}_resampled.tif')) as src:
         slope = src.read(1)
