@@ -205,10 +205,9 @@ if consider_additional_exclusion_polygons == 1:
         if filename.endswith(".geojson") or filename.endswith(".gpkg"):
             gdf = gpd.read_file(filepath) # Read the file into a GeoDataFrame
             gdf_clipped_reprojected = geopandas_clip_reproject(gdf, region, EPSG)
-            gdf_clipped_reprojected.to_file(os.path.join(glaes_output_dir, f'additional_exclusion_{count}_{region_name_clean}_{EPSG}.gpkg'), driver='GPKG')
-            count = count + 1
-        else:
-            print('no geojson or geopackage file in "additional_exclusion_polygons"')
+            if not gdf_clipped_reprojected.empty:
+                gdf_clipped_reprojected.to_file(os.path.join(glaes_output_dir, f'additional_exclusion_{count}_{region_name_clean}_{EPSG}.gpkg'), driver='GPKG')
+                count = count + 1
 
 
 

@@ -1,9 +1,9 @@
 #data config 
 landcover_source: 'file'   #'file' or 'openeo'
-consider_railways: 0
-consider_roads: 0
-consider_airports: 0
-consider_waterbodies: 0
+consider_railways: 1
+consider_roads: 1
+consider_airports: 1
+consider_waterbodies: 1
 consider_additional_exclusion_polygons: 1 
 EPSG_manual: ''  #if None use empty string
 
