@@ -16,8 +16,10 @@
 !Raw_Spatial_Data/GOAS/.gitkeep
 !Raw_Spatial_Data/custom_polygon
 !Raw_Spatial_Data/custom_polygon/.gitkeep
+!Raw_Spatial_Data/additional_exclusion_polygons
+!Raw_Spatial_Data/additional_exclusion_polygons/.gitkeep
 !config.yaml
-!spatial_data_prep_JOM.py
+!spatial_data_prep.py
 !data_exploration.ipynb
 !GLAES_Aachen.ipynb
 !GLAES_Aachen_test_data.ipynb
