@@ -85,7 +85,7 @@ In the beginning of the script you can select:
 * `consider_OSM_airports =` __0__ (don't use OSM data in study region) or __1__ (clip OSM data to study region)
 * `EPSG_manual =` __*'EPSG-Code'*__ (insert EPSG code like 3035 for Europe if you want to set it manually instead of using the calculated UTM zone) or keep it an __*empty string*__
 
-Moreover, you have to select your study region:
+Moreover, you have to select your study region. When using the automatic download from gadm.org, you have to specify the name of the region (region_name) and the GADM level as it is used by gadm.org. You can just browse the [gadm-pages](https://gadm.org/maps.html) by clicking on the respective country and click through the "sub-divisions" until you found your study region.
 * `region_name =` __*'region_name_as_string'*__ (name of the region, also the name of the output folder)
 * `OSM_folder_name =` __*'name_as_string'*__
 * `country_code =` __*'country_code_as_string'*__ (3 letters ISO code)
