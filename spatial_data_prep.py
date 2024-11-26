@@ -39,7 +39,7 @@ logging.basicConfig(handlers=[
         logging.StreamHandler()
         ], level=logging.INFO) #source: https://stackoverflow.com/questions/13733552/logger-configuration-to-log-to-file-and-print-to-stdout
 
-with open("config_IDN.yaml", "r", encoding="utf-8") as f:
+with open("configs/config_IDN.yaml", "r", encoding="utf-8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 #-------data config------- 
@@ -107,6 +107,8 @@ logging.info(f'Prepping {region_name}...')
 if custom_polygon_filename:
     custom_polygon_filepath = os.path.join('Raw_Spatial_Data','custom_polygon', custom_polygon_filename)
     region = gpd.read_file(custom_polygon_filepath)
+    if region.crs != 4326:
+        logging.warning('crs of custom polygon file for study region is not in EPSG 4326')
     logging.info('using custom polygon for study area')
 elif gadm_level==0:
     gadm_data = pygadm.Items(admin=country_code)
@@ -118,7 +120,7 @@ else:
     region = gadm_data.loc[gadm_data[f'NAME_{gadm_level}']==region_name]
     region.set_crs('epsg:4326', inplace=True) #pygadm lib extracts information from the GADM dataset as GeoPandas GeoDataFrame. GADM.org provides files in coordinate reference system is longitude/latitude and the WGS84 datum.
     logging.info('using admin area within country as study area')
-logging.info(f'region geojson loaded CRS: {region.crs}')
+
 region.to_file(os.path.join(output_dir, f'{region_name_clean}_4326.geojson'), driver='GeoJSON', encoding='utf-8')
 
 
@@ -130,14 +132,14 @@ EPSG = int(32700 - round((45 + latitude) / 90, 0) * 100 + round((183 + longitude
 if EPSG_manual:
     EPSG=int(EPSG_manual)
     logging.info(f'using manual set CRS with EPSG code {EPSG}')
+else:
+    logging.info(f'local CRS to be used: {EPSG}')
 
-logging.info(f'CRS to be used: {EPSG}')
 with open(os.path.join(output_dir, f'{region_name_clean}_EPSG.pkl'), 'wb') as file:
     pickle.dump(EPSG, file)
 
 # reproject country to defined projected CRS
 region.to_crs(epsg=EPSG, inplace=True) 
-logging.info(f'region projected to defined CRS: {region.crs}')
 region.to_file(os.path.join(output_dir, f'{region_name_clean}_{EPSG}.geojson'), driver='GeoJSON', encoding='utf-8')
 
 
@@ -218,6 +220,9 @@ if consider_waterbodies == 1:
 #clip and reproject additional exclusion polygons
 if consider_additional_exclusion_polygons == 1:
     print('processing additional exclusion polygons')
+    # Define output directory for additional exclusion polygons
+    add_excl_polygons_dir = os.path.join(output_dir,'additional_exclusion_polygons')
+    os.makedirs(add_excl_polygons_dir, exist_ok=True)
     count = 1
     # Loop through all files in the directory
     for filename in os.listdir(os.path.join(data_path, 'additional_exclusion_polygons')):
@@ -228,21 +233,22 @@ if consider_additional_exclusion_polygons == 1:
             gdf = gpd.read_file(filepath) # Read the file into a GeoDataFrame
             gdf_clipped_reprojected = geopandas_clip_reproject(gdf, region, EPSG)
             if not gdf_clipped_reprojected.empty:
-                gdf_clipped_reprojected.to_file(os.path.join(output_dir, f'additional_exclusion_{count}_{region_name_clean}_{EPSG}.gpkg'), driver='GPKG')
+                gdf_clipped_reprojected.to_file(os.path.join(add_excl_polygons_dir, f'additional_exclusion_{count}_{region_name_clean}_{EPSG}.gpkg'), driver='GPKG')
                 count = count + 1
 
 
 
 print('processing landcover')
 if landcover_source == 'openeo':
+    logging.info('using openeo to get landcover')
+
     connection = openeo.connect(url="openeo.dataspace.copernicus.eu").authenticate_oidc()
 
     output_path = os.path.join(output_dir, f'landcover_{region_name_clean}_EPSG{EPSG}.tif')
 
     if custom_polygon_filename:
         with open(custom_polygon_filepath, 'r') as file: #use region file in EPSG 4326 because openeo default file is in 4326
-            aoi = json.load(file)
-            logging.info('custom polygon used to clip openeo data')
+            aoi = json.load(file) #load polygon for clipping with openeo            
     else:
         with open(os.path.join(output_dir, f'{region_name_clean}_4326.geojson'), 'r') as file: #use region file in EPSG 4326 because openeo default file is in 4326
             aoi = json.load(file)
@@ -254,13 +260,18 @@ if landcover_source == 'openeo':
     landcover = masked_landcover.resample_spatial(projection=EPSG, resolution=0) #resolution=0 does not change resolution
     
     result = landcover.save_result('GTiFF')
+    job_options = {
+        "do_extent_check": False,
+        "executor-memory": "5G", #set executer-memory higher to process larger regions; see https://forum.dataspace.copernicus.eu/t/batch-process-error-when-using-certain-region/1454 
+        } #see also https://discuss.eodc.eu/t/memory-overhead-problem/424
     # Creating a new batch job at the back-end by sending the datacube information.
-    job = result.create_job(job_options={"do_extent_check": False}, title=f'landcover_{region_name_clean}_{EPSG}')
+    job = result.create_job(job_options=job_options, title=f'landcover_{region_name_clean}_{EPSG}')
     # Starts the job and waits until it finished to download the result.
     job.start_and_wait()
     job.get_results().download_file(output_path) 
 
 if landcover_source == 'file':
+    logging.info('using local file to get landcover')
     clip_reproject_raster(landcoverRasterPath, region_name_clean, region, 'landcover', EPSG, 'nearest', 'int16', output_dir)
 
 
@@ -348,4 +359,5 @@ if consider_WDPA == 1:
 print("Done!")
 
 elapsed = time.time() - start_time
+logging.info(f'elapsed seconds: {round(elapsed)}')
 print(elapsed)
