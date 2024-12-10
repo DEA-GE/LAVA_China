@@ -1,12 +1,11 @@
 # LAVA - *L*and *A*nalysis and a*VA*ilability
 
-This repo provides tools to calculate the available area in a user defined study region for building renewable energies like solar PV and wind onshore.
+LAVA is a tool to calculate the available area in a user defined study region for building renewable energies like solar PV and wind onshore.
 First, all needed data is preprocessed to bring it into the right format. This data can be analyzed to get a better understanding of the study region. Finally, the land eligibility analysis is done with [`atlite`](https://github.com/PyPSA/atlite) or [`GLAES`](https://github.com/FZJ-IEK3-VSA/glaes) (GLAES does not work fully yet).
 
 
-In general, it is nice to fetch input data via an API to have less manual work and less stored data. There are two APIs to fetch landcover and elevation data (ESAworldcover and copernicus_30m, but copernicus_30 is only a DSM, so not suitable (see info box below)):
-* Terrascope API: not implemented because of limited functionalities (e.g. only downloads tiles, data cannot be clipped to area of interest). [API documentation](https://vitobelgium.github.io/terracatalogueclient/api.html), [ESAworldvcover Product](https://docs.terrascope.be/#/DataProducts/WorldCover/WorldCover), 
-* [openEO API](https://openeo.org/): powerful API with connections to multiple back-ends. Implemented in the LAVA tool (only for the landcover data). Data processing can be done on the back-end if wanted. [API documentation](https://open-eo.github.io/openeo-python-client/), [openEO recorded Webinar](https://terrascope.be/en/news-events/joint-openeo-terrascope-webinar), [another webinar](https://www.youtube.com/watch?v=A35JHj8LM2k&list=PLNxdHvTE74Jy18qTecMcNruUjODMCiEf_&index=3) \
+Landcover data can be read from a local file or automatically fetched via the [openEO API](https://openeo.org/): 
+This powerful API can connect to multiple back-ends. Data processing can be done on the back-end if wanted. [API documentation](https://open-eo.github.io/openeo-python-client/), [openEO recorded Webinar](https://terrascope.be/en/news-events/joint-openeo-terrascope-webinar), [another webinar](https://www.youtube.com/watch?v=A35JHj8LM2k&list=PLNxdHvTE74Jy18qTecMcNruUjODMCiEf_&index=3) \
 In order to use ESAworldcover data via openEO, one needs to connect to the copernicus dataspace as the backend. Every user gets [10000 credits per months](https://dataspace.copernicus.eu/analyse/openeo) to carry out processes on this backend. In your [copernicus dataspace account](https://marketplace-portal.dataspace.copernicus.eu/billing) you can see your credits balance and how many credits your copernicus jobs costed. There is also a [Copernicus Dataspace Forum](https://forum.dataspace.copernicus.eu/)\
 [General limitations openEO](https://documentation.dataspace.copernicus.eu/APIs/openEO/openEO.html): tested up to 100x100km at 10m resolution, free tier synchronous requests and batch jobs limited to 2 concurrent requests/jobs.\
 There is also an [openeo Web Editor](https://editor.openeo.org/?server=openeo.dataspace.copernicus.eu) where you can see all your batch jobs.
@@ -110,5 +109,6 @@ With the JupyterNotebook `Atlite_custom_region.ipynb` you can finally derive the
 The code automatically recognizes if a file does not exist and thus does not take into account the respective file for the exclusion (e.g. there is no coastlines files when having a study region without a coast).
 
 
-
+### More info
+* Terrascope API: not implemented because of limited functionalities (e.g. only downloads tiles, data cannot be clipped to area of interest). [API documentation](https://vitobelgium.github.io/terracatalogueclient/api.html), [ESAworldvcover Product](https://docs.terrascope.be/#/DataProducts/WorldCover/WorldCover), 
 
