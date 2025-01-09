@@ -5,6 +5,7 @@ consider_railways: 0
 consider_roads: 0
 consider_airports: 0
 consider_waterbodies: 0
+consider_military: 0
 
 consider_additional_exclusion_polygons: 0 
 
@@ -55,6 +56,7 @@ railways_buffer: 100
 roads_buffer: 100 
 airports_buffer: 5000
 waterbodies_buffer: 5
+military_buffer: 0
 coastlines_buffer: 100
 protectedAreas_buffer: 0
 

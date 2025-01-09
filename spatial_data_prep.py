@@ -48,7 +48,8 @@ consider_coastlines = config['consider_coastlines']
 consider_railways = config['consider_railways']
 consider_roads = config['consider_roads']
 consider_airports = config['consider_airports']
-consider_waterbodies = config['consider_waterbodies'] 
+consider_waterbodies = config['consider_waterbodies']
+consider_military = config['consider_military']  
 consider_additional_exclusion_polygons = config['consider_additional_exclusion_polygons']
 EPSG_manual = config['EPSG_manual']  #if None use empty string
 consider_WDPA = config['consider_WDPA']
@@ -215,6 +216,17 @@ if consider_waterbodies == 1:
         OSM_waterbodies_filtered.to_file(os.path.join(output_dir, f'OSM_waterbodies_{region_name_clean}_{EPSG}.gpkg'), driver='GPKG', encoding='utf-8')
     else:
         logging.info("No waterbodies found in the region. File not saved.")
+
+
+if consider_military == 1:
+    print('processing military areas')
+    OSM_file = gpd.read_file(os.path.join(OSM_country_path, f'gis_osm_landuse_a_free_1.shp'))
+    OSM_military = geopandas_clip_reproject(OSM_file, region, EPSG)
+    # Check if OSM_military is not empty before saving
+    if not OSM_military.empty:
+        OSM_military.to_file(os.path.join(output_dir, f'OSM_military_{region_name_clean}_{EPSG}.gpkg'), driver='GPKG', encoding='utf-8')
+    else:
+        logging.info("No military areas found in the region. File not saved.")
 
 
 #clip and reproject additional exclusion polygons
