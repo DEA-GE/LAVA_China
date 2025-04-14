@@ -100,6 +100,8 @@ The files are saved to a folder within the __"data"__-folder named according to 
 
 
 ## 4. Land analysis
+:warning: use with caution, some functions were copied to spatial_data_prep.py (e.g. coloring of ESAworldcover from openeo, pixel size, ...)
+
 With the JupyterNotebook `data_exploration.ipynb` you can inspect the spatial data of your study region.
 In the second code cell just put the name of your study region as the folder with the preprocessed data is named. Additionally, put the right name of your landcover_source to fetch the correct legend and color dictionary.
 
@@ -113,6 +115,8 @@ The code automatically recognizes if a file does not exist and thus does not tak
 
 ## 6. Bring all files in a QGIS project together
 The script `create_qgis_project.py` puts all files together into a QGIS project to easily display them. This script needs to be used in the 'QGIS environment'. You can install it from the `requirements_qgis.yaml`. Additionally, you have to install the QGIS python package with the same version as your current QGIS installation in that environment.
+
+`conda install -c conda-forge qgis=VERSIONNUMBER`
 
 
 ## 7. More info / notes
