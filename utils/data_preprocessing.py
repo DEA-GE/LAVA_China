@@ -360,7 +360,7 @@ def download_global_wind_atlas(country_code: str, height: int, data_path: str = 
     url = f"https://globalwindatlas.info/api/gis/country/{country_code}/wind-speed/{height}"
     
     try:
-        print(f"Downloading data wind data for '{country_code}' from: {url}")
+        print(f"Downloading wind data for '{country_code}' from: {url}")
         response = requests.get(url)
         if response.ok:
             filePath = os.path.join(data_path, 'global_solar_wind_atlas', f"{country_code}_wind_speed_{height}.tif")
