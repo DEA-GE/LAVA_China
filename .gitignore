@@ -22,7 +22,7 @@
 !Raw_Spatial_Data/additional_exclusion_polygons
 !Raw_Spatial_Data/additional_exclusion_polygons/.gitkeep
 !configs
-!configs/config.yaml
+!configs/config_template.yaml
 !spatial_data_prep.py
 !data_exploration.ipynb
 !GLAES_Aachen.ipynb
