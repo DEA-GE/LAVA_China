@@ -169,7 +169,7 @@ if consider_coastlines == 1:
             if not coastlines_region.empty:
                 coastlines_region.to_file(os.path.join(output_dir, f'goas_{region_name_clean}_4326.gpkg'), driver='GPKG', encoding='utf-8')
                 coastlines_region.to_crs(epsg=EPSG, inplace=True)
-                coastlines_region.to_file(os.path.join(output_dir, goas_region_filePath, driver='GPKG', encoding='utf-8'))
+                coastlines_region.to_file(goas_region_filePath, driver='GPKG', encoding='utf-8')
             else:
                 logging.info('no coastline in study region')
         except:
