@@ -74,9 +74,14 @@ nfacing = 0 if not os.path.isfile(northfacingRasterPath) else 1
 
 
 # Load additional input files and set flags
+globalWindPath = os.path.join(data_path, f'wind_{region_name}_EPSG{EPSG}_resampled.tif')
+wind = 0 if not os.path.isfile(globalWindPath) else 1
+globalSolarPath = os.path.join(data_path, f'solar_{region_name}_EPSG{EPSG}_resampled.tif')
+solar = 0 if not os.path.isfile(globalSolarPath) else 1
+
 coastlinesPath = os.path.join(data_path, f'goas_{region_name}_{EPSG}.gpkg')
 coastlines = 0 if not os.path.isfile(coastlinesPath) else 1
-protectedAreasPath = os.path.join(data_path, f'protected_areas_{region_name}_{EPSG}.gpkg')
+protectedAreasPath = os.path.join(data_path, f'protected_areas_{config['consider_protected_areas']}_{region_name}_{EPSG}.gpkg')
 protectedAreas = 0 if not os.path.isfile(protectedAreasPath) else 1
 roadsPath = os.path.join(data_path, f'OSM_roads_{region_name}_{EPSG}.gpkg')
 roads = 0 if not os.path.isfile(roadsPath) else 1
@@ -114,9 +119,12 @@ if slope:
     excluder.add_raster(slopeRasterPath, codes=range(config['max_slope'], 90), crs=EPSG)
 if nfacing:
     excluder.add_raster(northfacingRasterPath, codes=1, crs=EPSG)
-
-#include global wind atlas
-#include global solar atlas
+if wind:
+    print(f"Adding wind raster")
+    #excluder.add_raster(globalWindPath, codes=np.arange(3, 15, 0.0000001).tolist(), invert=True, crs=EPSG)
+if solar:
+     #excluder.add_raster(globalSolarPath, codes=np.arange(1300, 1800, 0.001).tolist(),invert=False, crs=EPSG)
+    pass
 
 # Add vector-based exclusions
 if railways:
