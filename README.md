@@ -133,6 +133,7 @@ The script `create_qgis_project.py` puts all files together into a QGIS project 
 ## 8. Folder structure
 edit [here](https://tree.nathanfriend.com/?s=(%27opt3s!(%27fancy5~fullPath!false~trailingS9sh5~rootDot5)~8(%278%27LAVA-configs-envs-other-utils-Raw_SpatiBData-.4custom_studyC4DEM4globBso9r_wind_at9s4GOAS464OSM42-data4reg3_name0Freg70so9r0wind02060EPSG09nduses0pixel_size0OSM_files0derived_from_F*slope0*aspect4.%2F0%27)~vers3!%271%27)*%20%20-%5Cn*.*addit3Bexclus7s04*2protectedCs3ion4-*5!true69ndcover73_polygon8source!9laBal_C_areaFDEM0%01FCB987654320.-*)
 
+```
 LAVA/
 ├── 📁 configs
 ├── 📁 envs
@@ -163,7 +164,7 @@ LAVA/
         │   ├── *slope*
         │   └── *aspect*
         └── 📁 additional_exclusion_polygons/
-
+```
         
 
 ## 9. More info / notes
