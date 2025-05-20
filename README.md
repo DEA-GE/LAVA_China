@@ -166,6 +166,7 @@ LAVA/
         │   ├── *slope*
         │   └── *aspect*
         └── 📁 additional_exclusion_polygons/
+        └── 📁 available_land/
 ```
         
 
