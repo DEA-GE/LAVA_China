@@ -131,11 +131,13 @@ The script `create_qgis_project.py` puts all files together into a QGIS project 
 
 
 ## 8. Folder structure
-edit [here](https://tree.nathanfriend.com/?s=(%27opt5s!(%27fancy7~fullPath!false~trailingSCsh7~rootDot7)~B(%27B%27LAVA.configs.envs.other.utils.Raw_SpatiFDJ24custom_studyH4DEM4globFsoCr_wind_atCs4GOAS484OSM43.dJ%5C%27reg5_name%5C%27I*DEM6reg96soCr6wind63686EPSG6Cnduses6pixel_size6OSM_files0derived_from_DEMI-*slope0-*aspect02%2FI%27)~vers5!%271%27)-%20%20.%5Cn-6I2addit5Fexclus9s3protectedHs4.-5ion60*7!true8Cndcover95_polygonBsource!ClaFal_H_areaI4-Jata4%01JIHFCB987654320.-)
+original from [here](https://tree.nathanfriend.com/?s=(%27opt5s!(%27fancy7~fullPath!false~trailingSCsh7~rootDot7)~B(%27B%27LAVA.configs.envs.other.utils.Raw_SpatiFDJ24custom_studyH4DEM4globFsoCr_wind_atCs4GOAS484OSM43.dJ%5C%27reg5_name%5C%27I*DEM6reg96soCr6wind63686EPSG6Cnduses6pixel_size6OSM_files0derived_from_DEMI-*slope0-*aspect02%2FI%27)~vers5!%271%27)-%20%20.%5Cn-6I2addit5Fexclus9s3protectedHs4.-5ion60*7!true8Cndcover95_polygonBsource!ClaFal_H_areaI4-Jata4%01JIHFCB987654320.-)
 
 ```
 LAVA/
 ├── 📁 configs
+│   ├── config_template.yaml
+│   ├── config.yaml
 ├── 📁 envs
 ├── 📁 other
 ├── 📁 utils
