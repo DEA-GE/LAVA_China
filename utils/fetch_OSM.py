@@ -1,51 +1,73 @@
-import os
-import time
-import fiona
-from fiona.crs import from_epsg
+"""
+Script to fetch OpenStreetMap (OSM) features using the Overpass API and save them into a 
+single GeoPackage (.gpkg) file per region. Each feature is stored in a separate layer by 
+geometry type (Point, LineString, Polygon).
+
+The script also tracks any unsupported geometry types encountered during fetching (i.e., 
+geometries not included in the expected types) and saves a JSON summary of their counts 
+per region and feature.
+
+Main features:
+- Uses OSMPythonTools for region and data querying.
+- Uses GeoPandas to write outputs into .gpkg format with layer-per-feature-per-geometry.
+- Stores a summary of unsupported geometries in `unsupported_geometries_summary.json`.
+
+Usage:
+- Customize `regions` and `features_dict` as needed.
+- Run the script in a Python environment with required libraries installed.
+"""
+
+
+import os, time, json
+from typing import Optional
+from shapely.geometry import shape
+import geopandas as gpd
 from OSMPythonTools.nominatim import Nominatim
 from OSMPythonTools.overpass import overpassQueryBuilder, Overpass
 
-def fetch_osm_feature_from_dict(
+def fetch_osm_feature_to_gpkg(
     region_name: str,
     feature_key: str,
     features_dict: dict,
     output_dir: str = "Raw_Spatial_Data/OSM_Infrastructure",
-    relevant_geometries_override: dict = None,
+    relevant_geometries_override: Optional[dict] = None,
 ):
     """
-    Fetch OSM infrastructure data for a given region and feature key.
+    Fetch OSM infrastructure data for a given region and feature key and save to a GeoPackage.
 
     Args:
-        region_name (str): Name of the region to query (e.g., "inner mongolia").
+        region_name (str): Name of the region to query (e.g., "Inner Mongolia").
         feature_key (str): Key in the features_dict (e.g., "substation_way").
         features_dict (dict): A dictionary mapping keys to [category, category_element, element_type].
-        output_dir (str): Directory where shapefiles will be saved.
+        output_dir (str): Directory where the GeoPackage will be saved.
         relevant_geometries_override (dict): Optional dict mapping feature_key to list of geometries.
+
+    Returns:
+        dict: A dictionary of unsupported geometry types and their counts.
     """
-      # Validate feature_key exists in the dictionary
+    # Check that feature_key exists
     if feature_key not in features_dict:
         raise ValueError(f"'{feature_key}' not found in features_dict.")
 
-    # Extract OSM tag components and build selector string
+    # Get the OSM tag setup (e.g., 'power', 'substation', 'way')
     category, category_element, element_type = features_dict[feature_key]
-    selector = [f'"{category}"' if category_element == '*' else f'"{category}"="{category_element}"']
-    
-    # Track execution time and ensure output directory exists
-    start_time = time.time()
-    os.makedirs(output_dir, exist_ok=True)  # Ensure the output directory exists
+    selector = [f'"{category}"="{category_element}"']
 
-    # Use Nominatim to find the region and get its area ID
+    # Start timer and ensure output folder exists
+    start_time = time.time()
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Get the region’s OSM area ID using Nominatim
     nominatim = Nominatim()
     location = nominatim.query(region_name)
     if not location:
         print(f"Region '{region_name}' not found.")
-        return
+        return {}
 
-    # Get the area ID for the region
     area_id = location.areaId()
     print(f"Fetching data for: {location.displayName()} (Area ID: {area_id})")
 
-    # Build and execute the Overpass query
+    # Build and run Overpass query
     overpass = Overpass()
     query = overpassQueryBuilder(
         area=area_id,
@@ -55,13 +77,12 @@ def fetch_osm_feature_from_dict(
     )
     result = overpass.query(query, timeout=200)
 
-    # Early exit if no OSM elements were returned (prevents writing empty files)
+    # Skip if no data returned
     if not result.elements():
         print(f"No elements found for {feature_key} in {region_name}")
-        return
+        return {}
 
-
-    # Default mapping of feature keys to geometry types
+    # Default mapping of expected geometries
     default_geometries = {
         "substation_way": ["Polygon"],
         "generator_node": ["Point"],
@@ -72,114 +93,107 @@ def fetch_osm_feature_from_dict(
         "military_area": ["Polygon"],
     }
 
-    # Allow override of default geometry types
-    if relevant_geometries_override and feature_key in relevant_geometries_override:
-        relevant_geometries = relevant_geometries_override[feature_key]
-    else:
-        relevant_geometries = default_geometries.get(feature_key, ["Point", "LineString", "Polygon"])
+    # Use overrides if given
+    relevant_geometries = (
+        relevant_geometries_override[feature_key]
+        if relevant_geometries_override and feature_key in relevant_geometries_override
+        else default_geometries.get(feature_key, ["Point", "LineString", "Polygon"])
+    )
 
-    # Define schemas for shapefiles based on geometry types
-    schemas = {
-        g: {
-            'geometry': g,
-            'properties': {'Name': 'str:80', 'Type': 'str:40', 'id': 'str:40'}
-        } for g in relevant_geometries
-    }
+    # Initialize storage for valid geometries and unsupported types
+    geoms_dict = {g: [] for g in relevant_geometries}
+    unsupported_counts = {}
 
-    # Create a unique name for the shapefile based on tag and region
-    tag_slug = f"{category}_{category_element}_{element_type}".replace(' ', '_')
-    shapefile_paths = {
-        g: os.path.join(output_dir, f"{region_name.replace(' ', '_')}_{tag_slug}_{g.lower()}s.shp")
-        for g in relevant_geometries
-    }
-
-    # Open output shapefiles using Fiona with defined schema and CRS
-    outputs = {
-        g: fiona.open(
-            shapefile_paths[g], 'w',
-            crs=from_epsg(4326),
-            driver='ESRI Shapefile',
-            schema=schemas[g],
-            encoding='UTF-8'
-        )
-        for g in relevant_geometries
-    }
-
-    # Iterate through OSM elements and write to corresponding shapefile
+    # Loop through all OSM elements returned
     for element in result.elements():
         geometry = element.geometry()
         geometry_type = geometry.get('type')
-        if geometry_type in outputs:  # Check if the geometry type is supported
+
+        # If geometry type is expected, store it with basic metadata
+        if geometry_type in geoms_dict:
             try:
-                # Extract properties for the element
-                properties = {
+                props = {
                     'Name': element.tag('name') or 'Unknown',
                     'id': str(element.id()),
                     'Type': element.type()
                 }
-                # Write the element to the corresponding shapefile
-                outputs[geometry_type].write({'geometry': geometry, 'properties': properties})
+                geom = shape(geometry)
+                geoms_dict[geometry_type].append({**props, 'geometry': geom})
             except Exception as e:
-                print(f"Error writing element {element.id()}: {e}")
+                print(f"Error parsing element {element.id()}: {e}")
         else:
-            print(f"Unsupported geometry type: {geometry_type}")
+            # Otherwise, track it as unsupported
+            unsupported_counts[geometry_type] = unsupported_counts.get(geometry_type, 0) + 1
 
-    # Close all shapefiles
-    for output in outputs.values():
-        output.close()
+    # Build output GeoPackage path
+    gpkg_path = os.path.join(output_dir, f"{region_name.replace(' ', '_')}.gpkg")
 
-    # Print summary of saved files
-    print(f"\nSaved {element_type.upper()} data for '{category}={category_element}' to:")
-    for g, path in shapefile_paths.items():
-        print(f"  - {path}")
+    # Save each geometry type to a separate layer in the GPKG
+    layer_count = 0
+    for geom_type, features in geoms_dict.items():
+        if not features:
+            continue
+        gdf = gpd.GeoDataFrame(features, crs="EPSG:4326")
+        gdf.to_file(
+            gpkg_path,
+            layer=f"{feature_key}_{geom_type}",  # e.g., "road_way_LineString"
+            driver="GPKG",
+            mode='w' if layer_count == 0 else 'a'  # overwrite first, append others
+        )
+        layer_count += 1
+
+    # Final log for this feature/region
+    print(f"\nSaved {element_type.upper()} data for '{category}={category_element}' to {gpkg_path}")
     print(f"Elapsed time: {time.time() - start_time:.2f} seconds")
 
+    # Return summary of unsupported geometries
+    return unsupported_counts
 
-# Example usage
 
-# Dictionary defining the OSM features to fetch.
-# Each key maps to [category, category_element, element_type]
+# --------------------- MAIN EXECUTION ---------------------
+
+# Define OSM features to fetch
 features_dict = {
     "substation_way": ['power', 'substation', 'way'],
     "generator_node": ['power', 'generator', 'node'],
     "road_way": ['highway', 'primary', 'way'],
     "railway_way": ['railway', 'railways', 'way'],
-    "airport_way": ['aeroway', 'aerodrome', 'way'],  # Airports as aerodromes
-    "waterbody_way": ['natural', 'water', 'way'],    # Lakes, rivers, etc.
+    "airport_way": ['aeroway', 'aerodrome', 'way'],
+    "waterbody_way": ['natural', 'water', 'way'],
     "military_area": ['military', 'yes', 'way']
 }
 
-# List of regions (provinces or cities) to process
+# Define regions to process
 regions = [
     "Anhui",
     "Beijing"
-    # You can uncomment and extend the list with more provinces:
-    # "Chongqing",
-    # "Fujian",
-    # "Gansu",
-    # "Guangdong",
-    # "Guangxi",
-    # "Guizhou",
-    # "Hainan",
-    # "Hebei",
 ]
 
-# Base directory for saving output shapefiles
+# Define output base directory and prepare unsupported log
 output_base = "Input_data/OSM_Infrastructure"
+unsupported_summary = {}
 
-# Loop through each region and each feature
+# Loop through regions and features
 for region in regions:
-    # Construct region-specific subdirectory path
     region_dir = os.path.join(output_base, region.replace(" ", "_"))
 
-    # Loop through each feature type to fetch
     for feature_key in features_dict:
         print(f"\nProcessing {feature_key} in {region}")
-        fetch_osm_feature_from_dict(
+        unsupported = fetch_osm_feature_to_gpkg(
             region_name=region,
             feature_key=feature_key,
             features_dict=features_dict,
-            # Optional override for geometry types per feature (example only):
+            # Optional override for geometry types per feature::
             # relevant_geometries_override={"substation_node": ["Point"]},
             output_dir=region_dir
         )
+
+        # Save unsupported counts if any were found
+        if unsupported:
+            unsupported_summary[f"{region}_{feature_key}"] = unsupported
+
+# Save summary of unsupported geometries to JSON file
+with open(region_dir, "w", encoding="utf-8") as f:
+    json.dump(unsupported_summary, f, indent=2, ensure_ascii=False)
+
+print(f"\nUnsupported geometry summary saved to {region_dir}")
