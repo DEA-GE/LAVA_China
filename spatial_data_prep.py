@@ -42,18 +42,18 @@ with open("configs/config.yaml", "r", encoding="utf-8") as f:
 
 #-------data config------- 
 landcover_source = config['landcover_source']
-consider_coastlines = config['consider_coastlines']
-consider_railways = config['consider_railways']
-consider_roads = config['consider_roads']
-consider_airports = config['consider_airports']
-consider_waterbodies = config['consider_waterbodies']
-consider_military = config['consider_military']   
-consider_wind_atlas = config['consider_wind_atlas']
-consider_solar_atlas = config['consider_solar_atlas']  
+consider_coastlines = config['coastlines']
+consider_railways = config['railways']
+consider_roads = config['roads']
+consider_airports = config['airports']
+consider_waterbodies = config['waterbodies']
+consider_military = config['military']   
+consider_wind_atlas = config['wind_atlas']
+consider_solar_atlas = config['solar_atlas']  
 consider_additional_exclusion_polygons = config['additional_exclusion_polygons_folder_name']
 consider_additional_exclusion_rasters = config['additional_exclusion_rasters_folder_name']
 CRS_manual = config['CRS_manual']  #if None use empty string
-consider_protected_areas = config['consider_protected_areas']
+consider_protected_areas = config['protected_areas_source']
 wdpa_url = config['wdpa_url']
 
 #----------------------------
@@ -93,11 +93,6 @@ if consider_railways == 1 or consider_roads == 1 or consider_airports == 1 or co
 
 # Get region name without accents, spaces, apostrophes, or periods for saving files
 region_name_clean = clean_region_name(region_name)
-# region_name_clean = unidecode(region_name)
-# region_name_clean = region_name_clean.replace(" ", "")
-# region_name_clean = region_name_clean.replace(".", "")
-# region_name_clean = region_name_clean.replace("'", "") 
-
 
 # Define output directories
 output_dir = os.path.join(dirname, 'data', f'{region_folder_name}')

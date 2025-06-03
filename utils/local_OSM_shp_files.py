@@ -30,7 +30,7 @@ def process_single_local_osm_layer(config,
         target_crs (str or pyproj.CRS, optional): Output CRS for reprojection (e.g., 'EPSG:3857').
         OSM_data_path (str): Directory containing the raw OSM shapefiles.
     """
-    if config.get(f'consider_{layer_name}') != 1:
+    if config.get(f'{layer_name}') != 1:
         return
 
     # Read fclass list from config if available
