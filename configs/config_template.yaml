@@ -59,6 +59,9 @@ custom_study_area_filename: '' #if None use empty string
 # scenario name (written in available area filename)
 scenario: 'ref'
 
+# deployment density
+deployment_density: 50 # MW/km²
+
 # resolution manual
 resolution_manual: null
 

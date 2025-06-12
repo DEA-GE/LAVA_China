@@ -90,7 +90,7 @@ transmission=0 if not os.path.isfile(transmissionPath) and print('no transmissio
 
 # additional exclusion polygons
 additional_exclusion_polygons_Path = os.path.join(data_path, 'additional_exclusion_polygons')
-additional_exclusion_polygons=0 if not os.listdir(additional_exclusion_polygons_Path) and print('no additional exclusion polygon files') is None else 1
+additional_exclusion_polygons=0 if not os.path.exists(additional_exclusion_polygons_Path) and print('no additional exclusion polygon files') is None else 1
 
 # load unique land use codes
 with open(os.path.join(data_path, f'landuses_{region_name}.json'), 'r') as fp:
@@ -248,10 +248,15 @@ else: print('additional exclusion polygon files not found or not selected in con
 # calculate available areas
 masked, transform = shape_availability(region.geometry, excluder)
 
-eligible_share = masked.sum() * excluder.res**2 / region.geometry.item().area
+available_area = masked.sum() * excluder.res**2
+eligible_share = available_area / region.geometry.item().area
+power_potential = available_area*1e-6 * config['deployment_density']
 print()
-eligible_share = f"The eligibility share is: {eligible_share:.2%}"
-print(eligible_share)
+print(f"The eligibility share is: {eligible_share:.2%}")
+print()
+print(f'The available area is: {available_area:.2}')
+print()
+print(f'Power potential: {power_potential:.2} MW')
 
 print()
 print('following data was considered during exclusion:')
