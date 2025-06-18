@@ -89,7 +89,7 @@ coastlinesFilePath = os.path.join(data_path, 'GOAS', 'goas.gpkg')
 protected_areas_folder = os.path.join(data_path, 'protected_areas')
 wind_solar_atlas_folder = os.path.join(data_path, 'global_solar_wind_atlas')
 if consider_railways == 1 or consider_roads == 1 or consider_airports == 1 or consider_waterbodies == 1:
-    OSM_data_path = os.path.join(data_path, 'OSM', OSM_folder_name) 
+    OSM_data_path = os.path.join(data_path, 'OSM', OSM_folder_name)
 
 
 # Get region name without accents, spaces, apostrophes, or periods for saving files
@@ -193,7 +193,11 @@ region.to_crs(global_crs_obj, inplace=True)
 
 # OSM data
 if config['OSM_source'] == 'geofabrik':
-    process_all_local_osm_layer(config, region, region_name_clean, output_dir, OSM_data_path, target_crs=None)
+    OSM_output_dir = os.path.join(output_dir, 'OSM_Infrastructure')
+    print(OSM_output_dir)
+    os.makedirs(OSM_output_dir, exist_ok=True) 
+
+    process_all_local_osm_layer(config, region, region_name_clean, OSM_output_dir, OSM_data_path, target_crs=None)
 
 elif config['OSM_source'] == 'overpass':
 
