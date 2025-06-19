@@ -89,7 +89,7 @@ Finally, you have to specify the land exclusions and buffer zones.
 
 ## 3. Spatial data preparation
 The script `spatial_data_prep.py` performs multiple data preprocessing steps to facilitate the land analysis and land eligibility study:
-* download administrative boundary of the study region from [gadm.org](gadm.org) using the package pygadm or use a custom polygon instead if wished (custom polygon needs to be put to the right folder wihtin __"Raw_Spatial_Data"__ folder) (alternative sources for administrative boundaries [here](https://x.com/yohaniddawela/status/1828026372968603788); nice tool with online visualization and download [here](https://mapscaping.com/country-boundary-viewer/))
+* download administrative boundary of the study region from [gadm.org](https://gadm.org/) using the package pygadm or use a custom polygon instead if wished (custom polygon needs to be put to the right folder wihtin __"Raw_Spatial_Data"__ folder) (alternative sources for administrative boundaries [here](https://x.com/yohaniddawela/status/1828026372968603788); nice tool with online visualization and download [here](https://mapscaping.com/country-boundary-viewer/))
 * calculate the local UTM zone (you can also set the projected CRS manually)
 * clip and reproject to local UTM zone OSM railways, roads, airports and waterways (roads are also filtered to only consider main roads; hard-coded in the script)
 * clip and reproject landcover data and elevation data. 
@@ -130,7 +130,47 @@ The script `create_qgis_project.py` puts all files together into a QGIS project 
 `conda install -c conda-forge qgis=VERSIONNUMBER`
 
 
-## 7. More info / notes
+## 8. Folder structure
+original from [here](https://tree.nathanfriend.com/?s=(%27opt5s!(%27fancy7~fullPath!false~trailingSCsh7~rootDot7)~B(%27B%27LAVA.configs.envs.other.utils.Raw_SpatiFDJ24custom_studyH4DEM4globFsoCr_wind_atCs4GOAS484OSM43.dJ%5C%27reg5_name%5C%27I*DEM6reg96soCr6wind63686EPSG6Cnduses6pixel_size6OSM_files0derived_from_DEMI-*slope0-*aspect02%2FI%27)~vers5!%271%27)-%20%20.%5Cn-6I2addit5Fexclus9s3protectedHs4.-5ion60*7!true8Cndcover95_polygonBsource!ClaFal_H_areaI4-Jata4%01JIHFCB987654320.-)
+
+```
+LAVA/
+├── 📁 configs
+│   ├── config_template.yaml
+│   └── config.yaml
+├── 📁 envs
+├── 📁 other
+├── 📁 utils
+├── 📁 Raw_Spatial_Data/
+│   ├── 📁 additional_exclusion_polygons
+│   ├── 📁 custom_study_area
+│   ├── 📁 DEM
+│   ├── 📁 global_solar_wind_atlas
+│   ├── 📁 GOAS
+│   ├── 📁 landcover
+│   ├── 📁 OSM
+│   └── 📁 protected_areas
+└── 📁 data/
+    └── 📁 "region_name"/
+        ├── *DEM*
+        ├── *region_polygon*
+        ├── *solar*
+        ├── *wind*
+        ├── *protected_areas*
+        ├── *landcover*
+        ├── *EPSG*
+        ├── *landuses*
+        ├── *pixel_size*
+        ├── *OSM_files*
+        ├── 📁 derived_from_DEM/
+        │   ├── *slope*
+        │   └── *aspect*
+        ├── 📁 additional_exclusion_polygons/
+        └── 📁 available_land/
+```
+        
+
+## 9. More info / notes
 * Terrascope API: not implemented because of limited functionalities (e.g. only downloads tiles, data cannot be clipped to area of interest). [API documentation](https://vitobelgium.github.io/terracatalogueclient/api.html), [ESAworldvcover Product](https://docs.terrascope.be/#/DataProducts/WorldCover/WorldCover),
 
 * [adding basemaps to QGIS](https://gis.stackexchange.com/questions/20191/adding-basemaps-in-qgis)
@@ -138,5 +178,10 @@ The script `create_qgis_project.py` puts all files together into a QGIS project 
 * [Quick Review FABDEM with QGIS](https://www.youtube.com/watch?v=E3zKe81UOl8&t=3s)
 * [Meadows et al.](https://doi.org/10.1080/17538947.2024.2308734) conclude: "In conclusion, we found FABDEM to be the most accurate DEM overall (especially for forests and low-slope terrain), suggesting that its error correction methodology is effective at reducing large positive errors in particular and that it generalises well to new application sites. Where FABDEM is not an option (given licensing costs for commercial applications), GLO-30 DGED is the clear runner-up under most conditions, with the exception of forests, where NASADEM (re-processed SRTM data) is more accurate."
 For a more nuanced assessment read the articel (for some applications FABDEM might not be the most accurate one).
-* [GEDTM30](https://github.com/openlandmap/GEDTM30): GEDTM30 is a global 1-arc-second (~30m) Digital Terrain Model (DTM) built using a machine-learning-based data fusion approach. It can be used as an alternative to the GEBCO DEM. GEDTM30 will hopefully integrated with openeo soon. 
+
+
+
+## 10. Interesting additional datasets
+* [GEDTM30](https://github.com/openlandmap/GEDTM30): GEDTM30 is a global 1-arc-second (~30m) Digital Terrain Model (DTM) built using a machine-learning-based data fusion approach. It can be used as an alternative to the GEBCO DEM. GEDTM30 will hopefully integrated with openeo soon.
+* [Global Lakes and Wetlands Database](https://essd.copernicus.org/articles/17/2277/2025/#section6): comprehensive global map of 33 different types of wetlands around the world.
 
