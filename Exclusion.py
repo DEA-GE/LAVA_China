@@ -22,9 +22,6 @@ config_file = os.path.join("configs", "config.yaml")
 with open(config_file, "r", encoding="utf-8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
-
-
-
 region_name = config['region_name'] #if country is studied, then use country name
 region_name = clean_region_name(region_name)
 region_folder_name = config['region_folder_name'] #folder name for the region, e.g., 'China' or 'Germany'
@@ -33,6 +30,10 @@ technology = config.get('tech') #technology, e.g., 'wind' or 'solar'
 scenario= config.get('scenario') #scenario, e.g., 'ref' or 'high'
 print(region_name, scenario, technology)
 
+
+tech_config_file = os.path.join("configs", f"{technology}.yaml")
+with open(config_file, "r", encoding="utf-8") as f:
+    tech_config = yaml.load(f, Loader=yaml.FullLoader)
 
 #use snakemake params to override region name and folder name
 # if snakemake is used, then region name and folder name can be set via snakemake params
@@ -144,27 +145,31 @@ info_list_exclusion = []
 excluder = atlite.ExclusionContainer(crs=local_crs_obj, res=res)
 
 # add landcover exclusions
-if config['landcover_without_buffer']:
-    excluder.add_raster(landcoverPath, codes=config['landcover_without_buffer'],crs=local_crs_obj)
-    info_list_exclusion.append(f"landcover codes without buffer which are excluded: {config['landcover_without_buffer']}")
+if tech_config['landcover_without_buffer']:
+    input_codes = tech_config['landcover_without_buffer']
+    excluder.add_raster(landcoverPath, codes=input_codes,crs=local_crs_obj)
+    info_list_exclusion.append(f"landcover codes without buffer which are excluded: {input_codes}")
 else: print('landcover without buffer not selected in config.')
     
-if config['landcover_with_buffer']:   
-    for key, value in config['landcover_with_buffer'].items():
+if tech_config['landcover_with_buffer']:   
+    input_codes = tech_config['landcover_with_buffer']
+    for key, value in input_codes.items():
         excluder.add_raster(landcoverPath, codes=key, buffer=value ,crs=local_crs_obj)
-    info_list_exclusion.append(f"landcover codes with buffer which are excluded: {config['landcover_with_buffer']}")
+    info_list_exclusion.append(f"landcover codes with buffer which are excluded: {input_codes}")
 else: print('landcover with buffer not selected in config.')
 
 # add elevation exclusions
-if dem==1 and config['max_elevation'] is not None: 
-    excluder.add_raster(demRasterPath, codes=range(config['max_elevation'],10000), crs=global_crs_obj)
-    info_list_exclusion.append(f"max elevation: {config['max_elevation']}")
+if dem==1 and tech_config['max_elevation'] is not None: 
+    param= tech_config['max_elevation']
+    excluder.add_raster(demRasterPath, codes=range(param,10000), crs=global_crs_obj)
+    info_list_exclusion.append(f"max elevation: {param}")
 else: print('DEM file not found or not selected in config.')
 
 # add slope exclusions
-if slope==1 and config['max_slope'] is not None: 
-    excluder.add_raster(slopeRasterPath, codes=range(config['max_slope'],90), crs=global_crs_obj)
-    info_list_exclusion.append(f"max slope: {config['max_slope']}")
+if slope==1 and tech_config['max_slope'] is not None: 
+    param= tech_config['max_slope']
+    excluder.add_raster(slopeRasterPath, codes=range(param,90), crs=global_crs_obj)
+    info_list_exclusion.append(f"max slope: {param}")
 else: print('Slope file not found or not selected in config.')
 
 # add north facing exclusion
@@ -173,39 +178,57 @@ if nfacing==1  and config['north_facing_pixels'] is not None:
     info_list_exclusion.append(f'north facing pixels')
 else: print('North-facing file not found or not selected in config.')
 
+
 # add wind exclusions
 def wind_filter(mask):
-    if config['min_wind_speed'] is not None and config['max_wind_speed'] is not None:
-        return (mask < config['min_wind_speed']) | (mask > config['max_wind_speed'])
-    elif config['min_wind_speed'] is not None:
-        return mask < config['min_wind_speed']
-    elif config['max_wind_speed'] is not None:
-        return mask > config['max_wind_speed']
-    
-if wind==1 and (config['min_wind_speed'] is not None or config['max_wind_speed'] is not None): 
+    """Filter out values outside the desired wind speed range."""
+    min_val = tech_config['min_wind_speed']
+    max_val = tech_config['max_wind_speed']
+    if min_val is not None and max_val is not None:
+        return (mask < min_val) | (mask > max_val)
+    elif min_val is not None:
+        return mask < min_val
+    elif max_val is not None:
+        return mask > max_val
+
+if technology == "wind" and (config['min_wind_speed'] is not None or config['max_wind_speed'] is not None): 
+    min_wind_speed = tech_config['min_wind_speed']
+    max_wind_speed = tech_config['max_wind_speed']
     excluder.add_raster(windRasterPath, codes=wind_filter, crs=global_crs_obj)
-    if config['min_wind_speed'] is not None and config['max_wind_speed'] is not None: info=f"min wind speed: {config['min_wind_speed']}, max wind speed: {config['max_wind_speed']}"
-    elif config['min_wind_speed'] is not None: info=f"min wind speed: {config['min_wind_speed']}"
-    elif config['max_wind_speed'] is not None: info=f"max wind speed: {config['max_wind_speed']}"
+    if min_wind_speed is not None and config['max_wind_speed'] is not None: info=f"min wind speed: {min_wind_speed}, max wind speed: {max_wind_speed}"
+    elif min_wind_speed is not None: info=f"min wind speed: {min_wind_speed}"
+    elif max_wind_speed is not None: info=f"max wind speed: {max_wind_speed}"
     info_list_exclusion.append(f'{info}')
-else: print('Wind file not found or not selected in config.')
+else: print('Wind technology not selected in config.')
 
 # add solar exclusions
 def solar_filter(mask): #desired yearly, specific solar production (kWh/kW) 
-    if config['min_solar_production'] is not None and config['max_solar_production'] is not None:
-        return (mask < config['min_solar_production']) | (mask > config['max_solar_production'])
-    elif config['min_solar_production'] is not None:
-        return mask < config['min_solar_production']
-    elif config['max_solar_production'] is not None:
-        return mask > config['max_solar_production']
+    """Filter out values outside the desired solar production range (kWh/kW)."""
+    min_val = tech_config.get('min_solar_production')
+    max_val = tech_config.get('max_solar_production')
+    if min_val is not None and max_val is not None:
+        return (mask < min_val) | (mask > max_val)
+    elif min_val is not None:
+        return mask < min_val
+    elif max_val is not None:
+        return mask > max_val
     
-if solar==1 and (config['min_solar_production'] is not None or config['max_solar_production'] is not None): 
+if technology == "solar" and (config.get('min_solar_production') is not None or config.get('max_solar_production') is not None):
+    
+    min_solar_production = tech_config.get('min_solar_production')
+    max_solar_production = tech_config.get('max_solar_production')
+
     excluder.add_raster(solarRasterPath, codes=solar_filter, crs=global_crs_obj)
-    if config['min_solar_production'] is not None and config['max_solar_production'] is not None: info=f"min_solar_production: {config['min_solar_production']}, max_solar_production: {config['max_solar_production']}"
-    elif config['min_solar_production'] is not None: info=f"min_solar_production: {config['min_solar_production']}"
-    elif config['max_solar_production'] is not None: info=f"max_solar_production: {config['max_solar_production']}"
-    info_list_exclusion.append(f'{info}')
-else: print('Solar file not found or not selected in config.')
+    info_parts = []
+    if config.get('min_solar_production') is not None:
+        info_parts.append(f"min_solar_production: {config['min_solar_production']}")
+    if config.get('max_solar_production') is not None:
+        info_parts.append(f"max_solar_production: {config['max_solar_production']}")
+
+    info_list_exclusion.append(', '.join(info_parts))
+else:
+    print("Solar file not found or not selected in config.")
+
 
 
 # add exclusions from vector data
