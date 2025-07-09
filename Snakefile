@@ -1,37 +1,35 @@
-import yaml
-from utils.data_preprocessing import clean_region_name
-
-with open('configs/config.yaml') as f:
-    cfg = yaml.safe_load(f)
-
-region_folder = cfg['region_folder_name']
-region_clean = clean_region_name(cfg['region_name'])
-
-spatial_done = f"data/{region_folder}/spatial_data_prep.done"
-wind_done = f"data/{region_folder}/wind_exclusion.done"
-solar_done = f"data/{region_folder}/solar_exclusion.done"
-suitability_done = f"data/{region_folder}/suitability.done"
+regions = ["NeiMongol"]
+techs = ["solar", "wind"]
 
 rule all:
-    input: suitability_done
+    input:
+        expand("data/{region}/suitability.done", region=regions)
 
 rule spatial_data_prep:
-    output: spatial_done
-    shell: 'python spatial_data_prep.py && touch {output}'
+    output:
+        touch("data/{region}/spatial_data_prep.done")
+    params:
+        region=lambda wc: wc.region
+    script:
+        "spatial_data_prep.py"
 
-rule exclusion_wind:
-    input: spatial_done
-    output: wind_done
-    params: tech='wind'
-    shell: 'python Exclusion.py configs/wind.yaml {params.tech} && touch {output}'
-
-rule exclusion_solar:
-    input: spatial_done
-    output: solar_done
-    params: tech='solar'
-    shell: 'python Exclusion.py configs/solar.yaml {params.tech} && touch {output}'
+rule exclusion:
+    input:
+        "data/{region}/spatial_data_prep.done"
+    output:
+        touch("data/{region}/exclusion_{tech}.done")
+    params:
+        region=lambda wc: wc.region,
+        tech=lambda wc: wc.tech
+    script:
+        "exclusion.py"
 
 rule suitability:
-    input: wind_done, solar_done
-    output: suitability_done
-    shell: 'python suitability.py && touch {output}'
+    input:
+        expand("data/{{region}}/exclusion_{tech}.done", tech=techs)
+    output:
+        touch("data/{region}/suitability.done")
+    params:
+        region=lambda wc: wc.region
+    script:
+        "suitability.py"
