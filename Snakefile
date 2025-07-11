@@ -1,7 +1,7 @@
 from pathlib import Path
 
 regions = ["NeiMongol"]
-techs = ["solar", "wind"]
+technologies = ["solar", "wind"]
 
 def logpath(region, filename):
     return Path("data") / region / "snakemake_log" / filename
@@ -12,6 +12,7 @@ for region in regions:
 
 rule all:
     input:
+        expand(logpath(region, "exclusion_{technology}.done"), region=regions, technology=technologies),
         expand(logpath(region, "suitability.done"), region=regions)
 
 rule spatial_data_prep:
@@ -26,16 +27,16 @@ rule exclusion:
     input:
         logpath("{region}", "spatial_data_prep.done")
     output:
-        touch(logpath("{region}", "exclusion_{tech}.done"))
+        touch(logpath("{region}", "exclusion_{technology}.done"))
     params:
         region=lambda wc: wc.region,
-        tech=lambda wc: wc.tech
+        technology=lambda wc: wc.technology
     script:
         "Exclusion.py"
 
 rule suitability:
     input:
-        expand(logpath("{{region}}", "exclusion_{tech}.done"), tech=techs)
+        expand(logpath("{{region}}", "exclusion_{technology}.done"), technology=technologies)
     output:
         touch(logpath("{region}", "suitability.done"))
     params:

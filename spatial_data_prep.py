@@ -69,12 +69,15 @@ custom_study_area_filename = config.get('custom_study_area_filename', None)
 
 #use snakemake params to override region name and folder name
 # if snakemake is used, then region name and folder name can be set via snakemake params
-if 'snakemake' in globals() and hasattr(snakemake, 'params'):
+
+try: 
     region_override = snakemake.params.get('region')
     if region_override:
         region_folder_name = region_override
         region_name = region_override
-
+        print(f"\nRegion name and folder name overridden from snakemake to: {region_name}")
+except:
+    print("No snakemake params found, using default region name and folder name from config.")
 
 ##################################################
 #north facing pixels

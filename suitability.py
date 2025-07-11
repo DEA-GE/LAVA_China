@@ -7,11 +7,11 @@ import os
 import yaml
 import rasterio
 import snakemake
+import itertools
 import matplotlib.pyplot as plt
 from rasterio.warp import reproject, Resampling
 from rasterio.io import MemoryFile
-import itertools
-from utils.data_preprocessing import clean_region_name
+from utils.data_preprocessing import clean_region_name, rel_path
 
 #------------------------------------------- Functions -------------------------------------------
 
@@ -109,12 +109,12 @@ scenario = config['scenario']
 
 #use snakemake params to override region name and folder name
 # if snakemake is used, then region name and folder name can be set via snakemake params
-if 'snakemake' in globals() and hasattr(snakemake, 'params'):
+try:
     region_folder_name = snakemake.params.get('region')
     region_name = snakemake.params.get('region')
-    technology = snakemake.params.get('tech')
     scenario = snakemake.params.get('scenario')
-
+except:
+    print("Snakemake params not found, using config values.")
 
 
 
@@ -240,7 +240,7 @@ output_path = os.path.join(data_path,"suitability")
 if not os.path.exists(output_path):
     os.makedirs(output_path)
 tier_potentials_file = os.path.join(output_path, f'{region_name}_tier_potentials.csv')
-print(f'Exporting tier potentials to {output_path}')
+print(f'Exporting tier potentials to {rel_path(output_path)}')
 df_tier_potentials.to_csv(tier_potentials_file)
 
 

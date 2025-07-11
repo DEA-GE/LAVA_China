@@ -32,11 +32,14 @@ print(region_name, scenario, technology)
 
 #use snakemake params to override region name and folder name
 # if snakemake is used, then region name and folder name can be set via snakemake params
-if 'snakemake' in globals() and hasattr(snakemake, 'params'):
+try:
     region_folder_name = snakemake.params.get('region')
     region_name = snakemake.params.get('region')
     technology = snakemake.params.get('technology')
     scenario = snakemake.params.get('scenario')
+except :
+    print("No snakemake params found, using default settings from config.")
+
 
 #load the technology specific configuration file
 tech_config_file = os.path.join("configs", f"{technology}.yaml")
