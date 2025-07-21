@@ -1,5 +1,9 @@
 from pathlib import Path
+import json
 
+regions_filepath = Path("Raw_Spatial_Data/custom_study_area/China_provinces_list.json")
+with open(regions_filepath, "r") as f:
+    regions= json.load(f)
 regions = ["Gansu"]
 technologies = ["solar", "wind"]
 
