@@ -6,7 +6,6 @@ import pickle
 import os
 import yaml
 import rasterio
-import snakemake
 import itertools
 import matplotlib.pyplot as plt
 import json
@@ -101,7 +100,7 @@ def union(arrays):
         union_mask |= (array > 0)
 
     return union_mask.astype(int)
-    
+
 # Function to compute difference between two masked arrays
 def diff(array1, array2):
     # Compute difference mask (where data1 is present but data2 is not)
@@ -267,7 +266,7 @@ df_tier_potentials = pd.DataFrame(index=areas, columns=config["tiers"].keys())
 for sg in SG:
     print(f'Processing solar potential: {sg}')
     
-    inclusion_area = diff(solar_grades[sg], wind_avail_reproj)
+    inclusion_area = diff(solar_grades[sg], union(list(wind_grades.values())))
     if inclusion_area.sum() < config["min_area_rg"]:
         print(f'Low/no solar potential found for {sg} in {region_name}. Skipping.')
         continue
@@ -281,7 +280,7 @@ for sg in SG:
 for wg in WG:
     print(f'Processing wind potential: {wg}')
     
-    inclusion_area = diff(wind_grades[wg], solar_avail_reproj)
+    inclusion_area = diff(wind_grades[wg], union(list(solar_grades.values())))
     if inclusion_area.sum() < config["min_area_rg"]:
         print(f'Low/no wind potential found for {wg} in {region_name}. Skipping.')
         continue
@@ -305,10 +304,8 @@ for sg, wg in SG_WG_comb:
         tier_area = filter(inclusion_area, costmap, config["tiers"][t][0], config["tiers"][t][1])
         df_tier_potentials.loc[f"{region_name}_{sg}_{wg}", t] = np.sum(tier_area) * pixel_area_km2
 
-# Drop areas with potentials less than minimum area size
+# Drop areas with no potential
 df_tier_potentials = df_tier_potentials[df_tier_potentials.sum(axis=1) > 0].astype(int)
-# Convert to integer
-df_tier_potentials = df_tier_potentials.astype(int)
 
 # Export potentials to CSV
 tier_potentials_file = os.path.join(output_path, f'{region_name}_tier_potentials.csv')
@@ -323,8 +320,10 @@ with open(relevant_resource_grades_file, 'w') as f:
 
 # plot available land
 plt.figure(figsize=(10, 6))
-plt.imshow(wind_grades['WG2'], cmap='viridis', vmin=0, vmax=1)
-plt.imshow(solar_grades['SG2'], cmap='plasma', alpha=0.5, vmin=0, vmax=1)
+#plt.imshow(wind_grades['WG2'], cmap='viridis', vmin=0, vmax=1)
+#plt.imshow(solar_grades['SG2'], cmap='plasma', alpha=0.5, vmin=0, vmax=1)
+plt.imshow(union(list(wind_grades.values())), cmap='viridis', vmin=0, vmax=1)
+
 plt.imshow(GSA_reproj, cmap='plasma')
 plt.title(f'Solar Available Land in {region_name}')
 plt.legend(['Available Land'])

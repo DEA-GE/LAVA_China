@@ -1,21 +1,28 @@
 from pathlib import Path
+'''
+regions = ["Anhui", "Beijing", "Chongqing", "Fujian", "Gansu", "Guangdong", "Guangxi", "Guizhou",
+          "Hainan", "Hebei", "Heilongjiang", "Henan", "Hubei", "Hunan", "Jiangsu","Jiangxi",
+          "Jilin", "Liaoning", "NeiMongol", "NingxiaHui", "Shaanxi", "Shandong", "Shanghai",
+          "Shanxi", "Sichuan", "Tianjin", "Yunnan", "Zhejiang"]
+'''
+regions = ["Xizang", "Qinghai", "XinjiangUygur"]
 
-regions = ["NeiMongol"]
 technologies = ["solar", "onshorewind"]
-scenarios = ["Ref"]
-weather_years = [str(y) for y in range(1990, 2020)]
+scenarios = ["ref"]
+weather_years = [str(y) for y in range(2010, 2019)]
 
 def logpath(region, filename):
     return Path("data") / region / "snakemake_log" / filename
 
-
 for region in regions:
     Path(f"data/{region}/snakemake_log").mkdir(parents=True, exist_ok=True)
 
+
 rule all:
     input:
-        expand(logpath(region, "exclusion_{technology}.done"), region=regions, technology=technologies),
-        expand(logpath(region, "suitability.done"), region=regions)
+        expand(logpath("{region}", "exclusion_{technology}_{scenario}.done"), region=regions, technology=technologies, scenario=scenarios)
+        #expand(logpath(region, "suitability.done"), region=regions, scenario=scenarios)
+        #expand(logpath(region, "energy_profiles_{technology}_{weather_year}.done"), region=regions, technology=technologies, scenario=scenarios, weather_year=weather_years)
 
 rule spatial_data_prep:
     output:
@@ -29,34 +36,39 @@ rule exclusion:
     input:
         logpath("{region}", "spatial_data_prep.done")
     output:
-        touch(logpath("{region}", "exclusion_{technology}.done"))
+        touch(logpath("{region}", "exclusion_{technology}_{scenario}.done"))
     params:
         region=lambda wc: wc.region,
-        technology=lambda wc: wc.technology
+        technology=lambda wc: wc.technology,
+        scenario=lambda wc: wc.scenario
     script:
         "Exclusion.py"
 
+
+
+'''
 rule suitability:
     input:
-        expand(logpath("{{region}}", "exclusion_{technology}.done"), technology=technologies)
+        expand(logpath("{region}", "exclusion_{technology}_{scenario}.done"))
     output:
         touch(logpath("{region}", "suitability.done"))
     params:
-        region=lambda wc: wc.region
+        region=lambda wc: wc.region,
+        scenario=lambda wc: wc.scenario
     script:
         "suitability.py"
 
 rule energy_profiles:
     input:
-        expand(logpath("{region}", "suitability.done"), region=regions)
+        logpath("{region}", "suitability.done")
     output:
-        expand(logpath("{region}", "energy_profiles_{technology}_{weather_year}.done"), region=regions, technology=technologies, weather_year=weather_years)
+        touch(logpath("{region}", "energy_profiles_{technology}_{weather_year}_{scenario}.done"))
     params:
         region=lambda wc: wc.region,
         technology=lambda wc: wc.technology,
-        scenario=lambda wc: wc.scenario
+        scenario=lambda wc: wc.scenario,
         weather_year=lambda wc: wc.weather_year
     script:
         "energy_profiles.py"
 
-
+'''
