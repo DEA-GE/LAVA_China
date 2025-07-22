@@ -6,6 +6,7 @@ import pickle
 import os
 import yaml
 import rasterio
+import argparse
 import itertools
 import matplotlib.pyplot as plt
 import json
@@ -159,14 +160,16 @@ region_name = clean_region_name(region_name)
 scenario = config['scenario']
 
 
-#use snakemake params to override region name and folder name
-# if snakemake is used, then region name and folder name can be set via snakemake params
-try:
-    region_folder_name = snakemake.params.get('region')
-    region_name = snakemake.params.get('region')
-    scenario = snakemake.params.get('scenario')
-except:
-    print("Snakemake params not found, using config values.")
+# override values via command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("--region", help="override region name and folder")
+args = parser.parse_args()
+
+if args.region:
+    region_folder_name = args.region
+    region_name = args.region
+else:
+    print("Using values from config.")
 
 data_path = os.path.join(dirname, 'data', region_folder_name)
 data_path_available_land = os.path.join(data_path, 'available_land')

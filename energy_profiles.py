@@ -12,7 +12,14 @@ from pathlib import Path
 import yaml
 from utils.data_preprocessing import clean_region_name
 import pickle
-import glob
+import argparse
+
+
+#-----------------------------------Snakemake input to be implemented-----------------------------------#
+weather_year = 1990
+# region
+# pontential_path
+
 
 #------------------------------------------- Load configuration
 dirname = os.getcwd() 
@@ -22,20 +29,24 @@ with open(os.path.join("configs/config.yaml"), "r", encoding="utf-8") as f:
 region_folder_name = config['region_folder_name']
 region_name = config['region_name'] #if country is studied, then use country name
 region_name = clean_region_name(region_name)
-technology = config["technology"]
-scenario = config["scenario"]
+technology=config["technology"]
+scenario= config["scenario"]
 weather_year = config["weather_year"]
+print(f"Config parameters: region={region_name}, technology={technology}, weather_year={weather_year}")
 
-#use snakemake params to override region name and folder name
-# if snakemake is used, then region name and folder name can be set via snakemake params
-try:
-    region_folder_name = snakemake.params.get('region')
-    region_name = snakemake.params.get('region')
-    technology = snakemake.params.get('technology')
-    scenario = snakemake.params.get('scenario')
-    weather_year = snakemake.params.get('weather_year')
-except:
-    print("Snakemake params not found, using config values.")
+# override values via command line arguments through snakemake
+parser = argparse.ArgumentParser()
+parser.add_argument("--region", help="region and folder name")
+parser.add_argument("--technology", help="technology type")
+parser.add_argument("--weather_year", help="weather year for the energy profiles") 
+args = parser.parse_args()
+
+# Override values if provided in command line arguments wiht snakemake
+region_name = getattr(args, "region", region_name)
+region_folder_name = getattr(args, "region", region_folder_name)
+technology = getattr(args, "technology", technology)
+weather_year = getattr(args, "weather_year", weather_year)
+print(f"Using command line arguments: region={region_name}, technology={technology}")
 
 #load the technology specific configuration file
 tech_config_file = os.path.join("configs", f"{technology}.yaml")
