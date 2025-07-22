@@ -12,6 +12,7 @@ from pathlib import Path
 import yaml
 from utils.data_preprocessing import clean_region_name
 import pickle
+import argparse
 
 
 #-----------------------------------Snakemake input to be implemented-----------------------------------#
@@ -28,10 +29,27 @@ with open(os.path.join("configs/config.yaml"), "r", encoding="utf-8") as f:
 
 region_name = config['region_name'] #if country is studied, then use country name
 region_name = clean_region_name(region_name)
+region_folder_name = config['region_folder_name'] #folder name for the region
 technology=config["technology"]
 scenario= config["scenario"]
 
-data_path = os.path.join(dirname, 'data', config['region_folder_name'])
+# override values via command line arguments through snakemake
+parser = argparse.ArgumentParser()
+parser.add_argument("--region", help="region and folder name")
+parser.add_argument("--technology", help="technology type")
+parser.add_argument("--weather_year", help="weather year for the energy profiles") 
+args = parser.parse_args()
+
+# Override values if provided in command line arguments wiht snakemake
+region_name = getattr(args, "region", region_name)
+region_folder_name = getattr(args, "region", region_folder_name)
+technology = getattr(args, "technology", technology)
+weather_year = getattr(args, "weather_year", weather_year)
+print(f"Using command line arguments: region={region_name}, technology={technology}")
+
+
+
+data_path = os.path.join(dirname, 'data', region_folder_name)
 
 # Load the CRS
 # geo CRS
