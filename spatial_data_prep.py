@@ -17,6 +17,7 @@ import openeo
 import richdem
 import xdem
 import logging
+import argparse
 from pyproj import CRS
 from utils.data_preprocessing import *
 from utils.local_OSM_shp_files import *
@@ -27,10 +28,23 @@ from utils.proximity_calc import generate_distance_raster
 # Record the starting time
 start_time = time.time()
 
-logging.basicConfig(handlers=[
-        logging.FileHandler("data-prep.log", mode='w'),
-        logging.StreamHandler()
-        ], level=logging.INFO) #source: https://stackoverflow.com/questions/13733552/logger-configuration-to-log-to-file-and-print-to-stdout
+# Create handlers
+file_handler = logging.FileHandler("data-prep.log", mode='w')
+file_handler.setLevel(logging.DEBUG)  # file can record everything
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.WARNING)  # terminal only shows WARNING and above
+
+logging.basicConfig(
+    handlers=[file_handler, stream_handler],
+    level=logging.INFO,  # minimum level for logger; handlers override this
+    format="%(levelname)s:%(name)s:%(message)s"
+    ) #source: https://stackoverflow.com/questions/13733552/logger-configuration-to-log-to-file-and-print-to-stdout
+
+# Suppress specific noisy INFO logs from openeo
+#logging.getLogger("openeo.config").setLevel(logging.WARNING)
+#logging.getLogger("openeo.rest.connection").setLevel(logging.WARNING)
+
 
 with open("configs/config.yaml", "r", encoding="utf-8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
@@ -52,6 +66,7 @@ consider_additional_exclusion_rasters = config['additional_exclusion_rasters_fol
 CRS_manual = config['CRS_manual']  #if None use empty string
 consider_protected_areas = config['protected_areas_source']
 wdpa_url = config['wdpa_url']
+OSM_source = config['OSM_source']  #either 'geofabrik' or 'overpass'
 
 #----------------------------
 ############### Define study region ############### use geopackage from gadm.org to inspect in QGIS
@@ -66,18 +81,18 @@ gadm_level = config['gadm_level']
 #or use custom region
 custom_study_area_filename = config.get('custom_study_area_filename', None)
 
-#use snakemake params to override region name and folder name
-# if snakemake is used, then region name and folder name can be set via snakemake params
+# override region via command line argument
+parser = argparse.ArgumentParser()
+parser.add_argument("--region", help="override region name and folder")
+args = parser.parse_args()
 
-try: 
-    region_override = snakemake.params.get('region')
-    if region_override:
-        region_folder_name = region_override
-        region_name = region_override
-        custom_study_area_filename = f'gadm41_{country_code}_1_{region_name}.geojson' # Quick fix - should be improved later for better generalization
-        print(f"\nRegion name and folder name overridden from snakemake to: {region_name}")
-except:
-    print("No snakemake params found, using default region name and folder name from config.")
+if args.region:
+    region_folder_name = args.region
+    region_name = args.region
+    print(f"\nRegion name and folder name overridden from command line to: {region_name}")
+else:
+    print("No command line region provided, using values from config.")
+
 
 ##################################################
 #north facing pixels
@@ -96,8 +111,9 @@ demRasterPath = os.path.join(data_path, 'DEM', DEM_filename)
 coastlinesFilePath = os.path.join(data_path, 'GOAS', 'goas.gpkg')
 protected_areas_folder = os.path.join(data_path, 'protected_areas')
 wind_solar_atlas_folder = os.path.join(data_path, 'global_solar_wind_atlas')
-if consider_railways == 1 or consider_roads == 1 or consider_airports == 1 or consider_waterbodies == 1:
+if OSM_source == 'geofabrik':
     OSM_data_path = os.path.join(data_path, 'OSM', OSM_folder_name)
+
 
 
 # Get region name without accents, spaces, apostrophes, or periods for saving files
@@ -204,13 +220,13 @@ region.to_crs(global_crs_obj, inplace=True)
 
 
 # OSM data
-if config['OSM_source'] == 'geofabrik':
+if OSM_source == 'geofabrik':
     OSM_output_dir = os.path.join(output_dir, 'OSM_Infrastructure')
     os.makedirs(OSM_output_dir, exist_ok=True) 
 
     process_all_local_osm_layer(config, region, region_name_clean, OSM_output_dir, OSM_data_path, target_crs=None)
 
-elif config['OSM_source'] == 'overpass':
+elif OSM_source == 'overpass':
 
     print('\nprocessing OSM data')
 
@@ -271,7 +287,7 @@ elif config['OSM_source'] == 'overpass':
 # create proximity raster for substations if data exists and calculation is enabled
 if compute_substation_proximity:
     print('\ncomputing proximity distance for substations')
-    substation_filename = config['OSM_source'] + "_substations.gpkg" #OSM substations are saved in a file with the name of the OSM source
+    substation_filename = OSM_source + "_substations.gpkg" #OSM substations are saved in a file with the name of the OSM source
     substations_path = os.path.join(OSM_output_dir, substation_filename)
     if os.path.exists(substations_path):
         substations_gdf = gpd.read_file(substations_path)
@@ -295,7 +311,7 @@ if compute_substation_proximity:
 # create proximity raster for roads if data exists and calculation is enabled
 if compute_road_proximity:
     print('\ncomputing proximity distance for roads')
-    roads_filename=  config['OSM_source'] + "_roads.gpkg" #OSM roads are saved in a file with the name of the OSM source
+    roads_filename=  OSM_source + "_roads.gpkg" #OSM roads are saved in a file with the name of the OSM source
     roads_path = os.path.join(OSM_output_dir, roads_filename)
     if os.path.exists(roads_path):
         roads_gdf = gpd.read_file(roads_path) 
