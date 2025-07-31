@@ -25,6 +25,7 @@ from pathlib import Path
 import geopandas as gpd
 import rasterio
 from rasterio.features import shapes
+from rasterio.merge import merge
 from shapely.geometry import shape
 from shapely.ops import unary_union
 
@@ -40,12 +41,24 @@ def _parse_info(path: Path):
     return region, tech, scenario
 
 
-def _raster_to_gdf(path: Path) -> gpd.GeoDataFrame:
-    with rasterio.open(path) as src:
-        data = src.read(1)
-        mask = data != src.nodata
-        geoms = [shape(geom) for geom, val in shapes(data, mask=mask, transform=src.transform) if val != src.nodata]
-    return gpd.GeoDataFrame({"geometry": geoms}, crs=src.crs)
+
+def _merge_rasters(paths: list[Path]):
+    """Merge multiple rasters into one array and return data, transform, nodata and crs."""
+    srcs = [rasterio.open(p) for p in paths]
+    try:
+        mosaic, out_trans = merge(srcs)
+        nodata = srcs[0].nodata
+        crs = srcs[0].crs
+    finally:
+        for src in srcs:
+            src.close()
+    return mosaic[0], out_trans, nodata, crs
+
+
+def _array_to_gdf(data, transform, nodata, crs) -> gpd.GeoDataFrame:
+    mask = data != nodata
+    geoms = [shape(geom) for geom, val in shapes(data, mask=mask, transform=transform) if val != nodata]
+    return gpd.GeoDataFrame({"geometry": geoms}, crs=crs)
 
 
 def aggregate_available_land(root: Path, output: Path) -> None:
@@ -62,22 +75,32 @@ def aggregate_available_land(root: Path, output: Path) -> None:
         print("No available land rasters found.")
         return
 
-    with gpd.io.file.fiona.drivers():
-        for (tech, scen), paths in groups.items():
-            geoms = [_raster_to_gdf(p) for p in paths]
-            merged_geom = unary_union([g.unary_union for g in geoms])
-            gdf = gpd.GeoDataFrame(
-                {"technology": [tech], "scenario": [scen], "geometry": [merged_geom]},
-                crs=geoms[0].crs,
-            )
-            layer = f"{tech}_{scen}"
-            gdf.to_file(output, layer=layer, driver="GPKG")
-            print(f"Written layer {layer} with {len(paths)} files")
+    for (tech, scen), paths in groups.items():
+        # 1. Merge rasters
+        data, transform, nodata, crs = _merge_rasters(paths)
+        # 2. Convert merged raster to polygons (vectorize)
+        gdf = _array_to_gdf(data, transform, nodata, crs)
+        # 3. Merge all polygons into a single geometry (optional, for one feature per group)
+        merged_geom = gdf.union_all()
+        # 4. Create GeoDataFrame for export
+        out_gdf = gpd.GeoDataFrame(
+            {"technology": [tech], "scenario": [scen], "geometry": [merged_geom]},
+            crs=crs,
+        )
+        layer = f"{tech}_{scen}"
+        # 5. Export as vector (GeoPackage)
+        out_gdf.to_file(output, layer=layer, driver="GPKG")
+        print(f"Written layer {layer} with {len(paths)} files")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Aggregate available land rasters")
-    parser.add_argument("--root", type=Path, default=Path.cwd(), help="Project root containing data directory")
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path(__file__).resolve().parent,
+        help="Project root containing data directory",
+    )
     parser.add_argument("--output", type=Path, default=Path("aggregated_available_land.gpkg"), help="Output GeoPackage path")
     args = parser.parse_args()
     aggregate_available_land(args.root, args.output)
