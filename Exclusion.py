@@ -24,7 +24,6 @@ with open(config_file, "r", encoding="utf-8") as f:
 
 region_name = config['study_region_name'] #if country is studied, then use country name
 region_name_clean = clean_region_name(region_name)
-#region_folder_name = config['study_region_name'] #folder name for the region, e.g., 'China' or 'Germany'
 technology = config.get('technology') #technology, e.g., 'wind' or 'solar'
 scenario = config.get('scenario', 'ref') # scenario, e.g., 'ref' or 'high'
 
@@ -32,7 +31,6 @@ scenario = config.get('scenario', 'ref') # scenario, e.g., 'ref' or 'high'
 #Initialize parser for command line arguments and define arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--region", default=region_name_clean, help="region name")
-parser.add_argument("--region_folder_name", default=region_name_clean, help="region folder name")
 parser.add_argument("--method",default="manual", help="method to run the script, e.g., snakemake or manual")
 parser.add_argument('--technology', default=f"{technology}")
 args = parser.parse_args()

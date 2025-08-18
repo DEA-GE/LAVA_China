@@ -154,28 +154,25 @@ onshorewind_config_file = os.path.join("configs", f"onshorewind.yaml")
 with open(onshorewind_config_file, "r", encoding="utf-8") as f:
     onshorewind_config = yaml.load(f, Loader=yaml.FullLoader)
 
-region_folder_name = config['study_region_name']
+
 region_name = config['study_region_name'] #if country is studied, then use country name
 region_name = clean_region_name(region_name)
-region_folder_name = clean_region_name(region_folder_name)
 scenario = config['scenario']
 
 #Initialize parser for command line arguments and define arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--region", default=region_name, help="region name")
-parser.add_argument("--region_folder_name", default=region_folder_name, help="region folder name")
 parser.add_argument("--method",default="manual", help="method to run the script, e.g., snakemake or manual")
 args = parser.parse_args()
 
 # If running via Snakemake, use the region name and folder name from command line arguments
 if args.method == "snakemake":
     region_name = args.region
-    region_folder_name = args.region_folder_name
-    print(f"Running via snakemake - measures: region={region_name}, region_folder_name={region_folder_name}")
+    print(f"Running via snakemake - measures: region={region_name}")
 else:
-    print(f"Running manually - measures: region={region_name}, region_folder_name={region_folder_name}")
+    print(f"Running manually - measures: region={region_name}")
 
-data_path = os.path.join(dirname, 'data', region_folder_name)
+data_path = os.path.join(dirname, 'data', region_name)
 data_path_available_land = os.path.join(data_path, 'available_land')
 data_from_proximity = os.path.join(data_path, 'proximity')
 

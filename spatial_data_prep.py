@@ -84,7 +84,6 @@ custom_study_area_filename = config.get('custom_study_area_filename', None)
 #Initialize parser for command line arguments and define arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("--region", default=region_name_clean, help="region name")
-parser.add_argument("--region_folder_name", default=region_name_clean, help="region folder name")
 parser.add_argument("--method",default="manual", help="method to run the script, e.g., snakemake or manual")
 args = parser.parse_args()
 
@@ -92,7 +91,6 @@ args = parser.parse_args()
 if args.method == "snakemake":
     region_name = args.region
     region_name_clean = clean_region_name(region_name)  # Clean the region name for file naming
-    #region_folder_name = args.region_folder_name
     print(f"Running via snakemake - measures: region={region_name_clean}, region_folder_name={region_name_clean}")
 else:
     print(f"Running manually - measures: region={region_name_clean}, region_folder_name={region_name_clean}")

@@ -17,6 +17,7 @@ regions = ["Anhui", "Beijing", "Chongqing", "Fujian", "Gansu", "Guangdong", "Gua
           "Shanxi", "Sichuan", "Tianjin", "XinjiangUygur", "Xizang", "Yunnan", "Zhejiang"]
 technologies = ["solar", "onshorewind"]
 scenarios= "ref"
+regions = ["Anhui", "Beijing"]
 # the region folder name is the same as the region name in the China case. 
 
 # Create directories for each region and snakemake log
@@ -45,7 +46,7 @@ rule spatial_data_prep:
     params:
         method="snakemake"
     shell:
-        "python spatial_data_prep.py --region {wildcards.region} --region_folder_name {wildcards.region} --method {params.method}"
+        "python spatial_data_prep.py --region {wildcards.region} --method {params.method}"
 
 rule exclusion:
     input:
@@ -56,7 +57,7 @@ rule exclusion:
         method="snakemake"
     shell:
         (
-            "python Exclusion.py --region {wildcards.region} --region_folder_name {wildcards.region} "
+            "python Exclusion.py --region {wildcards.region} "
             "--technology {wildcards.technology} --method {params.method}"
         )
 
@@ -68,5 +69,5 @@ rule suitability:
     params:
         method="snakemake"
     shell:
-        "python suitability.py --region {wildcards.region} --region_folder_name {wildcards.region} --method {params.method}"
+        "python suitability.py --region {wildcards.region} --method {params.method}"
 
