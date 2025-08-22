@@ -123,7 +123,9 @@ def aggregate_available_land(root: Path, output: Path, json_output: Path) -> Non
         print("No available land rasters found.")
         return
 
+
     results: list[dict] = []
+
 
     for (tech, scen), items in groups.items():
         paths = [p for _, p, _ in items]
@@ -168,7 +170,7 @@ def aggregate_available_land(root: Path, output: Path, json_output: Path) -> Non
                 "available_area_km2": to_sci(area_val),
                 "power_potential_TW": to_sci(power_val),
             }
-        share_str = to_sci(share_agg) if share_agg is not None else "NA"
+
         print(
             f"Total {tech} {scen}: share={share_str}, "
             f"area={to_sci(area_sum / 1e6)} km2, power={to_sci(power_sum / 1e6)} TW"
