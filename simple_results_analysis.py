@@ -11,10 +11,14 @@ default).
 
 Usage::
 
-    python simple_results_analysis.py [--root PATH] [--output FILE]
+    python simple_results_analysis.py [--root PATH] [--output FILE] [--json-output FILE]
 
 By default ``--root`` is the directory containing this script, i.e. the
-repository root. ``--output`` sets the resulting GeoPackage path.
+repository root. ``--output`` sets the resulting GeoPackage path and
+``--json-output`` specifies where to write a JSON file with the individual
+measures and their aggregated values. The exported measures are expressed in
+scientific notation, with area converted to square kilometres and power to
+terawatts.
 """
 
 from __future__ import annotations
@@ -99,7 +103,7 @@ def parse_info_json(path: Path) -> dict | None:
         return None
 
 
-def aggregate_available_land(root: Path, output: Path) -> None:
+def aggregate_available_land(root: Path, output: Path, json_output: Path) -> None:
     info_files = list(root.glob("data/**/available_land/*_exclusion_info.json"))
     groups: dict[tuple[str, str], list[tuple[str, Path, dict]]] = {}
     for info_file in info_files:
@@ -119,6 +123,8 @@ def aggregate_available_land(root: Path, output: Path) -> None:
         print("No available land rasters found.")
         return
 
+    results: list[dict] = []
+
     for (tech, scen), items in groups.items():
         paths = [p for _, p, _ in items]
         data, transform, nodata, crs = _merge_rasters(paths)
@@ -129,6 +135,9 @@ def aggregate_available_land(root: Path, output: Path) -> None:
         power_sum = sum(info["power_potential"] for _, _, info in items)
         shares = [info["eligibility_share"] for _, _, info in items]
         share_agg = sum(shares) / len(shares) if shares else None
+
+        def to_sci(value: float) -> str:
+            return f"{value:.3e}"
 
         gdf = gpd.GeoDataFrame(
             {
@@ -145,16 +154,42 @@ def aggregate_available_land(root: Path, output: Path) -> None:
         gdf.to_file(output, layer=layer, driver="GPKG")
         print(f"Written layer {layer} with {len(paths)} files")
 
+        region_measures: dict[str, dict] = {}
         for region, _, info in items:
+            share_val = info["eligibility_share"]
+            area_val = info["available_area"] / 1e6
+            power_val = info["power_potential"] / 1e6
             print(
-                f"{region}: share={info['eligibility_share']:.2%}, area={info['available_area']:.2f} m2, "
-                f"power={info['power_potential']:.2f} MW"
+                f"{region}: share={to_sci(share_val)}, area={to_sci(area_val)} km2, "
+                f"power={to_sci(power_val)} TW"
             )
-        share_str = f"{share_agg:.2%}" if share_agg is not None else "NA"
+            region_measures[region] = {
+                "eligibility_share": to_sci(share_val),
+                "available_area_km2": to_sci(area_val),
+                "power_potential_TW": to_sci(power_val),
+            }
+        share_str = to_sci(share_agg) if share_agg is not None else "NA"
         print(
             f"Total {tech} {scen}: share={share_str}, "
-            f"area={area_sum:.2f} m2, power={power_sum:.2f} MW"
+            f"area={to_sci(area_sum / 1e6)} km2, power={to_sci(power_sum / 1e6)} TW"
         )
+
+        results.append(
+            {
+                "scenario": scen,
+                "technology": tech,
+                "aggregated": {
+                    "eligibility_share": to_sci(share_agg) if share_agg is not None else None,
+                    "available_area_km2": to_sci(area_sum / 1e6),
+                    "power_potential_TW": to_sci(power_sum / 1e6),
+                },
+                "regions": region_measures,
+            }
+        )
+
+    with json_output.open("w") as f:
+        json.dump(results, f, indent=2)
+    print(f"Written metrics JSON to {json_output}")
 
 
 if __name__ == "__main__":
@@ -165,6 +200,17 @@ if __name__ == "__main__":
         default=Path(__file__).resolve().parent,
         help="Project root containing data directory",
     )
-    parser.add_argument("--output", type=Path, default=Path("aggregated_available_land.gpkg"), help="Output GeoPackage path")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("aggregated_available_land.gpkg"),
+        help="Output GeoPackage path",
+    )
+    parser.add_argument(
+        "--json-output",
+        type=Path,
+        default=Path("aggregated_available_land.json"),
+        help="Path to write aggregated metrics JSON",
+    )
     args = parser.parse_args()
-    aggregate_available_land(args.root, args.output)
+    aggregate_available_land(args.root, args.output, args.json_output)
