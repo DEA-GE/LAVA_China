@@ -45,6 +45,16 @@ protectedAreas_buffer: 1000
 transmission_lines_buffer: 1000
 generators_buffer: 1000
 plants_buffer: 1000
+railways_buffer: 1000
+roads_buffer: 1000
+airports_buffer: 1000
+waterbodies_buffer: 1000
+military_buffer: 1000
+coastlines_buffer: 1000
+protectedAreas_buffer: 1000
+transmission_lines_buffer: 1000
+generators_buffer: 1000
+plants_buffer: 1000
 
 # additional exclusion polygons
 additional_exclusion_polygons_buffer: [] #list of buffers in meters in the order of the files in the "additional_exclusion_polygons"-folder in the region data folder
