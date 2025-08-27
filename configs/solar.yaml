@@ -75,7 +75,6 @@ substations_inclusion_buffer: null
 transmission_inclusion_buffer: 100000
 roads_inclusion_buffer: 10000
 
-
 # area filter
 min_pixels_connected: 5
 min_pixels_x: # currently not working, use min_pixels_connected instead
