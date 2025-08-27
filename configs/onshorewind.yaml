@@ -60,7 +60,7 @@ max_wind_speed: null #m/s
 
 # inclusion filter
 # EITHER use substations OR transmission OR roads (meters)
-substations_inclusion_buffer: 100000
+substations_inclusion_buffer: null
 transmission_inclusion_buffer: 100000
 roads_inclusion_buffer: 10000
 

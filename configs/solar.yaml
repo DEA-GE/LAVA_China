@@ -9,7 +9,13 @@ resolution_manual: null
 
 #landcover codes (buffer in meters) (here landcover codes for openeo as default example)
 landcover_codes: #dictionary of landcover code with corresponding buffer in meters
-  50: 500 
+  50: 1000
+  10: 1000
+  40: 1000
+  70: 1000
+  80: 1000
+  90: 1000
+  95: 1000
 
 #landcover codes (buffer in meters) (here landcover codes for openeo as default example)
 #| Code | Class                    |
@@ -60,12 +66,12 @@ plants_buffer: 1000
 additional_exclusion_polygons_buffer: [] #list of buffers in meters in the order of the files in the "additional_exclusion_polygons"-folder in the region data folder
 
 # energy resources
-min_solar_production: 1000 #kWh/kW/year
+min_solar_production: 1050 #kWh/kW/year
 max_solar_production: null #kWh/kW/year
 
 # inclusion filter
 # EITHER use substations OR transmission OR roads (meters)
-substations_inclusion_buffer: 100000
+substations_inclusion_buffer: null
 transmission_inclusion_buffer: 100000
 roads_inclusion_buffer: 10000
 
