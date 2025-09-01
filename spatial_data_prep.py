@@ -500,7 +500,7 @@ try:
     #------------- Terrain Ruggedness Index -----------------
     if compute_terrain_ruggedness:
         print('\nprocessing Terrain Ruggedness Index')
-        tri_local_path = os.path.join(output_dir, f'TerrainRuggednessIndex_{region_name_clean}_{local_crs_tag}.tif')
+        tri_local_path = os.path.join(richdem_helper_dir, f'TerrainRuggednessIndex_{region_name_clean}_{local_crs_tag}.tif')
         tri_global_path = os.path.join(richdem_helper_dir, f'TerrainRuggednessIndex_{region_name_clean}_{global_crs_tag}.tif')
         if os.path.exists(tri_local_path) and os.path.exists(tri_global_path):
             print(f"Terrain Ruggedness Index already exists at {rel_path(tri_local_path)}. Skipping calculation.")
