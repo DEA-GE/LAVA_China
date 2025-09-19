@@ -25,7 +25,6 @@ region_name = clean_region_name(region_name)
 technology=config["technology"]
 scenario = config.get('scenario', 'ref') # scenario, e.g., 'ref' or 'high'
 weather_year = config["weather_year"]
-#print(f"Config parameters: region={region_name}, technology={technology}, weather_year={weather_year}")
 
 # override values via command line arguments through snakemake
 parser = argparse.ArgumentParser()
@@ -89,7 +88,8 @@ with open(resource_grades_file, 'r') as f:
     resource_grades = json.load(f) 
 
 # List all files in the weather data files (in case of multiple files per year)
-cutout_files = glob.glob(os.path.join(config['weather_data_path'],"weather_data", f'*_{weather_year}_*'))
+weather_data_path = os.path.abspath(config["weather_data_path"])
+cutout_files = glob.glob(os.path.join(weather_data_path, f'*{weather_year}*'))
 
 # Regional entent
 x1, y1, x2, y2 = region.to_crs(global_crs_obj).total_bounds 
@@ -106,6 +106,7 @@ df_rg = pd.DataFrame(index=time, columns=resource_grades)
 for cutout_file in cutout_files:
     print(f"Processing cutout file: {rel_path(cutout_file)}")
     cutout = atlite.Cutout(path=cutout_file).sel(x=slice(x1 - offset, x2 + offset), y=slice(y1 - offset, y2 + offset))
+
     # Apply bias correction to the weather data
     cutout.data['wnd100m'] = cutout.data['wnd100m'] * ERA5_wnd100m_bias['wnd100m']
 
@@ -140,7 +141,7 @@ for cutout_file in cutout_files:
         #cutout.grid.plot(ax=ax, color="None", edgecolor="grey")
 
         capacity_matrix = A.stack(spatial=["y", "x"])
-
+        x
         # Simulate the technology profiles based on the configuration
         match technology:
             case "solar":
