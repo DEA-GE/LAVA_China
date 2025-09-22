@@ -56,12 +56,13 @@
 !Snakefile
 !utils/simplify.py
 !utils/gadm_levels_to_geojson.py
+!utils/delete_available_land.py
+!utils/!simple_results_analysis.py
 !suitability.py
 !weather_data_prep.py
 !create_cutout.py
-!simple_results_analysis.py
 !snakefile_short
 !snakefile_short_short
 !bias_correction_factors
 !bias_correction_factors/ERA5_wnd100m_bias.nc
-!delete_available_land.py
+
