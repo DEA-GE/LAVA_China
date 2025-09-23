@@ -466,8 +466,8 @@ if config['landcover_source'] == 'file':
 
 print('processing DEM') #block comment: SHIFT+ALT+A, multiple line comment: STRG+#
 try:
-    clip_reproject_raster(demRasterPath, region_name_clean, region, 'DEM', local_crs_obj, 'bilinear', 'int16', output_dir)
-    clip_reproject_raster(demRasterPath, region_name_clean, region_buffered_4000, 'DEM_buffered', local_crs_obj, 'bilinear', 'int16', output_dir)
+    clip_reproject_raster(demRasterPath, region_name_clean, region, 'DEM', local_crs_obj, 'bilinear', 'float32', output_dir)
+    clip_reproject_raster(demRasterPath, region_name_clean, region_buffered_4000, 'DEM_buffered', local_crs_obj, 'bilinear', 'float32', output_dir)
     dem_4326_Path = os.path.join(output_dir, f'DEM_{region_name_clean}_EPSG4326.tif')
     dem_local_buffered_Path = os.path.join(output_dir, f'DEM_buffered_{region_name_clean}_{local_crs_tag}.tif') #for ruggedness index calculation
     #reproject and match resolution of DEM to landcover data (co-registration)
@@ -490,7 +490,7 @@ try:
     # co_register(slopeFilePathLocalCRS, processed_landcover_filePath, 'nearest', slope_co_registered_FilePath, dtype='int16')
     #save in 4326: slope cannot be calculated from EPSG4326 because units get confused (https://github.com/r-barnes/richdem/issues/34)
     slopeFilePath4326 = os.path.join(richdem_helper_dir, f'slope_{region_name_clean}_EPSG4326.tif')
-    reproject_raster(slopeFilePathLocalCRS, region_name_clean, 4326, 'bilinear', 'int16', slopeFilePath4326)
+    reproject_raster(slopeFilePathLocalCRS, region_name_clean, 4326, 'bilinear', 'float32', slopeFilePath4326)
 
     #create aspect map (https://www.earthdatascience.org/tutorials/get-slope-aspect-from-digital-elevation-model/)
     #save in local CRS
@@ -502,7 +502,7 @@ try:
     # co_register(aspectFilePathLocalCRS, processed_landcover_filePath, 'nearest', aspect_co_registered_FilePath, dtype='int16')
     #save in 4326: not sure if aspect is calculated correctly in EPSG4326 because units might get confused (https://github.com/r-barnes/richdem/issues/34)
     aspectFilePath4326 = os.path.join(richdem_helper_dir, f'aspect_{region_name_clean}_EPSG4326.tif')
-    reproject_raster(aspectFilePathLocalCRS, region_name_clean, 4326, 'bilinear', 'int16', aspectFilePath4326)
+    reproject_raster(aspectFilePathLocalCRS, region_name_clean, 4326, 'bilinear', 'float32', aspectFilePath4326)
 
     #------------- Terrain Ruggedness Index -----------------
     if compute_terrain_ruggedness:
