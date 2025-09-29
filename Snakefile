@@ -13,11 +13,15 @@ def logpath(region, filename):
 #define parameters
 regions = ["Anhui", "Beijing", "Chongqing", "Fujian", "Gansu", "Guangdong", "Guangxi", "Guizhou",
           "Hainan", "Hebei", "Heilongjiang", "Henan", "Hubei", "Hunan", "Jiangsu","Jiangxi",
-          "Jilin", "Liaoning", "West-InnerMongolia", "East-InnerMongolia", "Ningxia", "Qinghai", "Shaanxi", "Shandong", "Shanghai",
-          "Shanxi", "Sichuan", "Tianjin", "Xinjiang", "Xizang", "Yunnan", "Zhejiang"]
+          "Jilin", "Liaoning", "NeiMongol", "NingxiaHui", "Qinghai", "Shaanxi", "Shandong", "Shanghai",
+          "Shanxi", "Sichuan", "Tianjin", "XinjiangUygur", "Xizang", "Yunnan", "Zhejiang"]
 technologies = ["solar", "onshorewind"]
-weather_years = 2015 #[str(y) for y in range(2015, 2016)]
-scenario= "ref"
+weather_years = [str(y) for y in range(2010, 2011)]
+scenario= "noInclusion"
+
+#short term fix for testing
+regions=["Beijing"]
+weather_years=1990
 
 # Create directories for each region and snakemake log
 for r in regions:
@@ -29,7 +33,7 @@ The snakemake workflow will parallelize (--cores > 1) everything else but the sp
 The resources are limited to openeo cause the api is throwing problems with parallelization. 
     use thi line ---->  snakemake --cores 4 --resources openeo_req=1
 to use a specific Snakefile, use the --snakefile option
-    use thi line ----> snakemake --snakefile Snakefile_short --cores 4 --resources openeo_req=1
+    use thi line ----> snakemake --snakefile snakemake/Snakefile_short --cores 4 --resources openeo_req=1
 """
 
 rule all:
