@@ -8,37 +8,37 @@ Prerequisites
 
 Before installing and running **LAVA**, ensure you have the following:
 
-- `**Conda** <https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html>`_ (Anaconda or Miniconda) installed on your system for managing the environment and python.
-When installing Conda make sure to add it to your system PATH
+- `Conda <https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html>`_ (Anaconda or Miniconda) installed on your system for managing the environment and python.
+When installing Conda make sure to add it to your system PATH (search for the following folders in your machine)
 
 .. code-block:: console
 
     set PATH=C:\users\miniconda
     set PATH=C:\users\miniconda\Scripts
 
-- `**Git** <https://git-scm.com/install/>`_ (optional) if you plan to clone the repository using Git.
-- `**VSCode** <https://code.visualstudio.com/download>`_ or another code editor for editing configuration files and scripts.
+- `Git <https://git-scm.com/install/>`_ (optional) if you plan to clone the repository using Git.
+- `VSCode <https://code.visualstudio.com/download>`_ or another code editor for editing configuration files and scripts.
 - A system with sufficient disk space (min. 15 GB) and RAM (16 GB or higher), especially if processing large datasets.
 
-Setting up the Conda Environment
+Installation of LAVA tool
 --------------------------------
 
-1. **Clone the repository**: Open a terminal and run:
+1. **Clone the repository**: Open a terminal, navigate to a location of your choice using :code:`cd {folder_name_in_directory}` and run:
 
    .. code-block:: bash
 
-      git clone https://github.com/m-dandrea/LAVA.git
+      git clone https://github.com/jome1/LAVA.git
       cd LAVA
 
-   This will create a local copy of the project in a folder named ``LAVA``.
+   This will create a local copy of the project in a folder named ``LAVA`` and opens that folder in the terminal.
 
-2. **Create the Conda environment** using the provided environment file. The repository includes an environment file (e.g., ``requirements.yaml``) that lists all necessary dependencies. Run the following command from the repository root:
+2. **Create the Conda environment** using the provided environment file that lists all necessary dependencies. Run the following command from the repository root:
 
    .. code-block:: bash
 
-      conda env create -f envs/environment.yaml
+      conda env create -f envs/win-64.lock.yaml
 
-   This will create a new Conda environment (named ``lava``) with all required packages, including Snakemake and geospatial libraries (GDAL/OGR, OpenEO client, etc.).
+   This will create a new Conda environment (named ``lava``) with all required packages.
 
 3. **Activate the environment**:
 
@@ -47,13 +47,7 @@ Setting up the Conda Environment
       conda activate lava
 
 
-4. *(Optional)* **Update the environment** in the future: If the environment file changes (for example, new dependencies are added), you can update your environment with:
-
-   .. code-block:: bash
-
-      conda env update -f envs/environment.yaml
-
-Project Folder Structure
+LAVA Folder Structure
 ------------------------
 
 Understanding the repository layout will help in navigating the project and configuring it. Below is an overview of the **LAVA** folder structure (using relative paths from the repository root):
