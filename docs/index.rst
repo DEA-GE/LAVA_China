@@ -9,5 +9,4 @@ Welcome to the **LAVA_china** pipeline documentation. This documentation provide
 
    getting_started
    usage
-   troubleshooting
    faq
