@@ -128,6 +128,7 @@ Understanding the repository layout will help in navigating the project and conf
             └── pixel_size
 
 Main folders important for user:
+
 - **configs**: multiple configuration files 
 - **Raw_spatial_data/**: Intended for raw input data required by the pipeline. For example, if the pipeline requires a boundary shapefile or other input datasets, they should be placed here, in the specified folders.
 - **data/**: Outputs produced by the pipeline will be stored here. The pipeline will create subdirectories or files in this folder to organize results. This folder only appears after the first tool run.
