@@ -24,6 +24,9 @@ from OSMPythonTools import logger as osm_logger
 # Only log ERROR or CRITICAL; ignore WARNING and below
 osm_logger.setLevel(logging.ERROR)
 
+# Suppress pyogrio INFO logs
+logging.getLogger("pyogrio").setLevel(logging.WARNING)
+
 def osm_to_gpkg(
     region_name: str,
     polygon: list,
