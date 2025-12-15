@@ -1,4 +1,5 @@
 import atlite
+import time
 import matplotlib.pyplot as plt
 from scipy.ndimage import label
 import numpy as np
@@ -15,7 +16,10 @@ from utils.data_preprocessing import clean_region_name, log_scenario_run
 from rasterstats import zonal_stats
 from utils.raster_analysis import area_filter
 
-dirname = os.getcwd() 
+# Record the starting time
+start_time = time.time()
+
+dirname = os.getcwd()  
 #main_dir = os.path.join(dirname, '..')
 config_file = os.path.join("configs", "config.yaml")
 #load the configuration file
@@ -502,11 +506,14 @@ if config['model_areas_filename']:
     print('\npotentials in model areas:')
     print(subset.to_string(index=False))
 
+elapsed = time.time() - start_time
+print(f'elapsed time: {elapsed}')
 
 # save info in textfile
 with open(os.path.join(output_dir, f"{region_name_clean}_{scenario}_{technology}_exclusion_info.txt"), "w") as file:
     file.write(f"{technology}")
     file.write(f"\nscenario: {scenario}")
+    file.write(f"\ncalculation time: {elapsed}")
     file.write(f"\nmin pixels connected: {min_pixels_connected}\n\n")
     for item in info_list_exclusion:
         file.write(f"{item}\n")
@@ -520,10 +527,12 @@ with open(os.path.join(output_dir, f"{region_name_clean}_{scenario}_{technology}
 
         file.write(subset.to_string(index=False))
 
+
 # save info in JSON file for easier retrieval
 info_data = {
     "technology": technology,
     "scenario": scenario,
+    "calculation_time_seconds": float(elapsed),
     "min_pixels_connected": int(min_pixels_connected),
     "info_list": info_list_exclusion,
     "eligibility_share": float(eligible_share),
