@@ -37,6 +37,13 @@ start_time = time.time()
 with open("configs/config.yaml", "r", encoding="utf-8") as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
+# Load advanced data prep settings
+advanced_config_path = os.path.join("configs", "advanced_settings", "advanced_data_prep_settings.yaml")
+if not os.path.exists(advanced_config_path):
+    advanced_config_path = os.path.join("configs", "advanced_settings", "advanced_data_prep_settings_template.yaml")
+with open(advanced_config_path, "r", encoding="utf-8") as f:
+    config_advanced = yaml.load(f, Loader=yaml.FullLoader)
+
 #-------data config------- 
 consider_coastlines = config['coastlines']
 consider_railways = config['railways']
@@ -86,9 +93,9 @@ else:
 
 ##################################################
 #north facing pixels
-X = config['X']
-Y = config['Y']
-Z = config['Z']
+X = config_advanced['X']
+Y = config_advanced['Y']
+Z = config_advanced['Z']
 
 
 # Record the starting time
@@ -148,7 +155,7 @@ else:
 
 # simplify polygon of study area (openeo can only handle polygons up to a certain size)
 try:
-    region["geometry"] = region["geometry"].simplify(config["study_area"]["tolerance"], preserve_topology=True)
+    region["geometry"] = region["geometry"].simplify(config_advanced["study_area"]["tolerance"], preserve_topology=True)
 except Exception as e:
     logging.warning(f"Polygon of study could not be simplified: {e}")
 region.to_file(os.path.join(output_dir, f'{region_name_clean}_EPSG4326.geojson'), driver='GeoJSON', encoding='utf-8')
@@ -231,7 +238,7 @@ if OSM_source == 'geofabrik':
     try:
         OSM_output_dir = os.path.join(output_dir, 'OSM_Infrastructure')
         os.makedirs(OSM_output_dir, exist_ok=True) 
-        process_all_local_osm_layer(config, region, region_name_clean, OSM_output_dir, OSM_data_path, target_crs=None)
+        process_all_local_osm_layer(config_advanced, region, region_name_clean, OSM_output_dir, OSM_data_path, target_crs=None)
     except Exception as e:
         logging.error(f"local OSM shapefiles failed: {e}")
 
@@ -240,7 +247,7 @@ elif OSM_source == 'overpass':
 
     # Define OSM features to fetch
     # Load all possible OSM features directly from config
-    osm_features_config = config.get("osm_features_config", {})
+    osm_features_config = config_advanced.get("osm_features_config", {})
     
     print('Prepare polygon for overpass query')
     #Use the GDAM polygon to fetch OSM data, first simplify the polygon to avoid too many vertices
@@ -262,7 +269,7 @@ elif OSM_source == 'overpass':
         # skip if we’ve already got this GeoPackage
         gpkg_path = os.path.join(OSM_output_dir, f"overpass_{feature_key}.gpkg")
 
-        if os.path.exists(gpkg_path) and not config['force_osm_download']:
+        if os.path.exists(gpkg_path) and not config_advanced['force_osm_download']:
             print(f">>  Skipping '{feature_key}' for {region_name_clean}: '{rel_path(gpkg_path)}' already exists.")
 
         else:

@@ -17,6 +17,7 @@ import geopandas as gpd
 from OSMPythonTools.nominatim import Nominatim
 from OSMPythonTools.overpass import overpassQueryBuilder, Overpass
 from utils.data_preprocessing import rel_path
+import yaml
 
 import logging
 from OSMPythonTools import logger as osm_logger
@@ -206,17 +207,16 @@ def osm_to_gpkg(
 
 
 if __name__ == "__main__":
-    import yaml
-    from utils.data_preprocessing import rel_path
 
-    config_path = os.path.join("configs", "config.yaml")
-    if not os.path.exists(config_path):
-        config_path = os.path.join("configs", "config_template.yaml")
 
-    with open(config_path, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+    # Load advanced data prep settings
+    advanced_config_path = os.path.join("configs", "advanced_settings", "advanced_data_prep_settings.yaml")
+    if not os.path.exists(advanced_config_path):
+        advanced_config_path = os.path.join("configs", "advanced_settings", "advanced_data_prep_settings_template.yaml")
+    with open(advanced_config_path, "r", encoding="utf-8") as f:
+        config_advanced = yaml.load(f, Loader=yaml.FullLoader)
 
-    osm_features_config = config.get("osm_features_config", {})
+    osm_features_config = config_advanced.get("osm_features_config", {})
 
     polygon = [[48.3, 16.3], [48.3, 16.5], [48.2, 16.6], [48.1, 16.5], [48.1, 16.3]]
     region = "Example Region"

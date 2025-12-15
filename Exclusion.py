@@ -197,7 +197,7 @@ elif terrain_ruggedness==1 and param is None: info_list_not_selected.append(f"te
 elif terrain_ruggedness==0: info_list_not_available.append(f"terrain_ruggedness")
 
 # add north facing exclusion
-param = config['north_facing_pixels']
+param = tech_config['north_facing_pixels']
 if nfacing==1  and param is not None:
     excluder.add_raster(northfacingRasterPath, codes=1, crs=global_crs_obj)
     info_list_exclusion.append(f'north facing pixels')
