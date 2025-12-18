@@ -11,7 +11,7 @@ Find the tool documentation [here](https://lava-tool.readthedocs.io/en/latest/).
 ## Tool setup
 __a) clone the repository (using Git Bash):__
 
-`git clone https://github.com/jome1/LAVA.git`
+`git clone https://github.com/DEA-GE/LAVA.git`
 
 After cloning, navigate to the top-level folder of the repo in your command window.
 
