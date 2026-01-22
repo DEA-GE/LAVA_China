@@ -97,3 +97,11 @@ Following data must be downloaded (partly manually ðŸ”§, partly automatically ðŸ
 
    Take additional care when using a study region with a **coastline**.
    Coastlines can be very complex. Always cross-check the results.
+
+
+**additional ideas for data to be included if available:**
+- historical and touristic monuments
+- archaeological sites
+- earthquake zones
+- landslide zones
+- ...
