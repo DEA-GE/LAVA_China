@@ -77,3 +77,7 @@ For a more nuanced assessment read the articel (for some applications FABDEM mig
 * [GEDTM30](https://github.com/openlandmap/GEDTM30): GEDTM30 is a global 1-arc-second (~30m) Digital Terrain Model (DTM) built using a machine-learning-based data fusion approach. It can be used as an alternative to the GEBCO DEM. GEDTM30 will hopefully integrated with openeo soon.
 * [Global Lakes and Wetlands Database](https://essd.copernicus.org/articles/17/2277/2025/#section6): comprehensive global map of 33 different types of wetlands around the world.
 
+__useful to identify residential areas__:
+* [World Settlement Footprint (WSF®) 2019](https://geoservice.dlr.de/web/datasets/wsf_2019): 10m resolution binary mask outlining the extent of human settlements globally derived by means of 2019 multitemporal Sentinel-1 (S1) and Sentinel-2 (S2) imagery.
+* [GHS-BUILT-C - R2023A](https://human-settlement.emergency.copernicus.eu/ghs_buC2023.php): The spatial raster dataset delineates the boundaries of the human settlements at 10m resolution, and describe their inner characteristics in terms of the morphology of the built environment and the functional use.
+
