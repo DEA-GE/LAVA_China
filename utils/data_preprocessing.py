@@ -17,61 +17,8 @@ import urllib.parse
 from pyproj import CRS
 import pandas as pd
 import rasterstats 
-from datetime import datetime, timedelta
 
 import logging
-
-
-def download_worldpop(country_code: str, year: int, output_dir: str):
-    """
-    Downloads WorldPop population data for a given country and year.
-    
-    Parameters:
-        country_code (str): ISO 3166-1 alpha-3 country code (e.g., "DEU", "KEN").
-        year (int): Year of the population data (e.g., 2020).
-        output_dir (str): Directory where the file will be saved.
-    
-    Returns:
-        str: Path to the downloaded file if successful, None otherwise.
-    """
-    # Convert country code to lowercase for filename
-    country_lower = country_code.lower()
-    country_upper = country_code.upper()
-    
-    # Hardcoded defaults
-    release = "2025A"
-    version = "1"
-    resolution = "100m"
-    data_type = "constrained"
-    
-    # Construct the URL
-    url = (f"https://data.worldpop.org/GIS/Population/Global_2015_2030/R{release}/"
-           f"{year}/{country_upper}/v{version}/{resolution}/{data_type}/"
-           f"{country_lower}_pop_{year}_CN_{resolution}_R{release}_v{version}.tif")
-    
-    # Construct output filepath
-    os.makedirs(output_dir, exist_ok=True)
-    filename = f"population_{country_upper}_{year}.tif"
-    output_path = os.path.join(output_dir, filename)
-    
-    try:
-        response = requests.get(url, timeout=300)
-        
-        if response.status_code == 200:
-            with open(output_path, "wb") as f:
-                f.write(response.content)
-            return output_path
-        else:
-            logging.error(f"Failed to download. HTTP status: {response.status_code}")
-            return None
-            
-    except requests.Timeout:
-        logging.error(f"Download timed out after 300 seconds for '{country_code}'.")
-        return None
-    except Exception as e:
-        logging.error(f"Error downloading WorldPop data: {e}")
-        return None
-
 
 def get_country_bounds_from_code(country_code):
     """
@@ -92,56 +39,81 @@ def get_country_bounds_from_code(country_code):
     return [bbox["minlng"], bbox["minlat"], bbox["maxlng"], bbox["maxlat"]]
 
 
-def goas_download(output_dir):
-    base_url = "https://geo.vliz.be/geoserver/MarineRegions/wfs"
-
-    # Parameters for WFS request - using GeoJSON output
-    params = {
-        'service': 'WFS',
-        'version': '2.0.0',
-        'request': 'GetFeature',
-        'typeNames': 'goas',
-        #'cql_filter': 'mrgid=3293',  # Filter by Marine Regions ID
-        'outputFormat': 'application/json'
-    }
-
-    response = requests.get(base_url, params=params, timeout=300)
-
-    if response.status_code == 200:
-        gdf = gpd.read_file(response.text)
-        gpkg_path = os.path.join(output_dir, "goas.gpkg")
-        gdf.to_file(gpkg_path, driver="GPKG")
-    else:
-        logging.error(f"GOAS download failed: {response.status_code}")
-
-
-def retrieve_wdpa_url(country_code):
+def resolve_weather_years(raw_years):
     """
-    Attempts to locate the latest available WDPA zip file by checking
-    the current month, previous month, and next month. Returns the
-    first accessible URL or raises an error if none exist.
+    Normalise arbitrary weather-year inputs into a list.
+
+    Supported forms:
+    - Single integers/strings (2015 or "2015") -> [2015]
+    - Iterables (lists/sets) -> flattened
+    - Comma-separated strings ("2015,2020") -> [2015, 2020]
+    - Ranges using "start*end" inclusive of start, exclusive of end,
+      consistent with ``range`` semantics. Values are emitted as strings.
     """
 
-    def check_file_exists(url):
-        response = requests.head(url)
-        return response.status_code == 200
+    def _expand(value):
+        if value is None:
+            return []
+        if isinstance(value, (list, tuple, set)):
+            expanded = []
+            for item in value:
+                expanded.extend(_expand(item))
+            return expanded
+        if isinstance(value, (int, float)):
+            return [int(value)]
+        if isinstance(value, str):
+            token = value.strip()
+            if not token:
+                return []
+            if "*" in token:
+                start_text, _, end_text = token.partition("*")
+                try:
+                    start_year = int(start_text)
+                    end_year = int(end_text)
+                except ValueError:
+                    return [token]
+                if start_year > end_year:
+                    start_year, end_year = end_year, start_year
+                return [str(y) for y in range(start_year, end_year)]
+            if "," in token:
+                expanded = []
+                for part in token.split(","):
+                    expanded.extend(_expand(part))
+                return expanded
+            try:
+                return [int(token)]
+            except ValueError:
+                return [token]
+        return [value]
 
-    # month formats: e.g., Jan2025
-    month_candidates = [
-        datetime.now().strftime("%b%Y"),
-        (datetime.now() - timedelta(days=30)).strftime("%b%Y"),
-        (datetime.now() + timedelta(days=30)).strftime("%b%Y")
-    ]
+    seen = set()
+    normalised = []
+    for entry in _expand(raw_years):
+        key = str(entry)
+        if not key:
+            continue
+        if key not in seen:
+            seen.add(key)
+            normalised.append(entry)
+    return normalised
 
-    for bYYYY in month_candidates:
-        url = f"https://d1gam3xoknrgr2.cloudfront.net/current/WDPA_WDOECM_{bYYYY}_Public_{country_code}.zip"
-        if check_file_exists(url):
-            logging.info(f"Found WDPA file for {bYYYY} from WDPA for {country_code}")
-            return url, bYYYY
-
-    raise FileNotFoundError(
-        f"No WDPA files found for {month_candidates} using country code: {country_code}"
-    )
+def get_country_bounds_from_code(country_code):
+    """
+    Retrieve bounding box [minx, miny, maxx, maxy] for a country ISO2/ISO3 code.
+    """
+    gc = geonamescache.GeonamesCache()
+    countries = gc.get_countries()
+    code = country_code.upper()
+    country_info = countries.get(code)
+    if not country_info:
+        country_info = next(
+            (info for info in countries.values() if info.get("iso3", "").upper() == code),
+            None,
+        )
+    if not country_info:
+        raise ValueError(f"Country code '{country_code}' not found.")
+    bbox = country_info["bbox"]
+    return [bbox["minlng"], bbox["minlat"], bbox["maxlng"], bbox["maxlat"]]
 
 
 #download WDPA functions
@@ -153,8 +125,9 @@ def download_unpack_zip(url, output_dir):
         logging.info("Download complete, extracting files...")
         with zipfile.ZipFile(io.BytesIO(response.content)) as z:
             z.extractall(path=output_dir)
+        logging.info(f"Files extracted to {os.path.abspath(output_dir)}")
     else:
-        logging.error(f"WDPA file download failed: {response.status_code}")
+        logging.warning(f"Failed to download the file, status code: {response.status_code}")
 
 # Function to find the geodatabase folder
 def find_folder(directory, file_ending=None, string_in_name=None):
@@ -163,9 +136,11 @@ def find_folder(directory, file_ending=None, string_in_name=None):
             if file_ending is not None:
                 if folder.endswith(file_ending):
                     return os.path.join(root, folder)
+                    logging.info('Found folder with geodatabase')
             if string_in_name is not None:
                 if string_in_name in folder:
                     return os.path.join(root, folder)
+                    logging.info('WDPA folder of country already existed')
     return None
   
 
@@ -251,7 +226,7 @@ def clip_raster(input_raster_path, region_name_clean, gdf, output_dir, data_name
 
         ori_raster_crs = str(src.crs)
         ori_raster_crs = ori_raster_crs.replace(":", "")
-        #print(f'original raster CRS: {src.crs}')
+        print(f'original raster CRS: {src.crs}')
         # Save the clipped raster as a new GeoTIFF file
         if data_name is None:
             with rasterio.open(os.path.join(output_dir, f'{filename}_{region_name_clean}_{ori_raster_crs}.tif'), 'w', **out_meta) as dest:
@@ -311,7 +286,7 @@ def clip_reproject_raster(input_raster_path, region_name_clean, gdf, data_name, 
 
         ori_raster_crs = str(src.crs)
         ori_raster_crs = ori_raster_crs.replace(":", "")
-        #print(f'original raster CRS: {src.crs}')
+        print(f'original raster CRS: {src.crs}')
         # Save the clipped raster as a new GeoTIFF file
         with rasterio.open(os.path.join(output_dir, f'{data_name}_{region_name_clean}_{ori_raster_crs}.tif'), 'w', **out_meta) as dest:
             dest.write(out_image)
@@ -347,7 +322,7 @@ def clip_reproject_raster(input_raster_path, region_name_clean, gdf, data_name, 
                     dst_crs=target_crs,
                     resampling=resampling_options[resampling_method])
                 
-            #print(f'reprojected raster CRS: {dst.crs}')
+            print(f'reprojected raster CRS: {dst.crs}')
     
 
 
@@ -409,7 +384,7 @@ def reproject_raster(input_raster_path, region_name_clean, target_crs, resamplin
                 except (ValueError, KeyError):
                     pass  # No colormap present or band index invalid
                 
-            #print(f'reprojected raster CRS: {dst.crs}')
+            print(f'reprojected raster CRS: {dst.crs}')
 
 
 def co_register(infile, match, resampling_method, outfile, dtype): #source: https://pygis.io/docs/e_raster_resample.html
@@ -569,13 +544,13 @@ def download_global_wind_atlas(country_code: str, height: int, data_path: str = 
             filePath = os.path.join(data_path, 'global_solar_wind_atlas', f"{country_code}_wind_speed_{height}.tif")
             with open(filePath, "wb") as f:
                 f.write(response.content)
-            #print(f"Downloaded to: {filePath}")
+            print(f"Downloaded to: {filePath}")
             return True
         else:
             print(f"Failed to download. HTTP status: {response.status_code}")
             return False
     except Exception as e:
-        logging.error(f'global wind atlas download failed: {e}')
+        print(f"Error: {e}")
         return False
     
 
@@ -620,7 +595,7 @@ def download_global_solar_atlas(country_name: str, data_path: str, measure = 'LT
             with zipfile.ZipFile(io.BytesIO(response.content)) as zip_ref:
                 zip_ref.extractall(extract_folder)
 
-            #print(f"Files extracted to '{extract_folder}'")
+            print(f"Files extracted to '{extract_folder}'")
 
             # Assuming the zip contains a single folder (standard GSA structure)
             folder_name = zip_ref.namelist()[0].split('/')[0]  # top-level folder name
@@ -629,10 +604,10 @@ def download_global_solar_atlas(country_name: str, data_path: str, measure = 'LT
             print(f"Failed to download data for '{country_name}'. Status code: {response.status_code}")
             
     except requests.Timeout:
-        logging.warning(f"Download solar atlas data timed out after {timeout} seconds for '{country_name}'.")
+        print(f"Download solar atlas data timed out after {timeout} seconds for '{country_name}'.")
         return None
     except Exception as e:
-        logging.error(f"solar atlas download failed: {e}")
+        print(f"An error occurred: {e}")
         return None
 
 
