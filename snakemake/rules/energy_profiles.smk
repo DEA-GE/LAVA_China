@@ -1,4 +1,7 @@
 rule energy_profiles:
+    input:
+        expand(logpath("{region}", "suitability_{scenario}.done"), region=regions, scenario=scenario),
+        expand(logpath("{region}", "weather_bias_adjust.done"), region=regions)
     output:
         touch(logpath("{region}", "energy_profiles_{technology}_{weather_year}_{scenario}.done"))
     params:

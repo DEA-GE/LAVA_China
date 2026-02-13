@@ -2,8 +2,7 @@ from pathlib import Path
 import json
 import yaml
 
-
-from utils.data_preprocessing import resolve_weather_years
+from workflow_utils import validate_stage_dependencies, normalize_to_list, resolve_weather_years
 
 
 with open("configs/config_snakemake.yaml", "r", encoding="utf-8") as f:
@@ -11,7 +10,7 @@ with open("configs/config_snakemake.yaml", "r", encoding="utf-8") as f:
 
 
 # define parameters , keep them in list as it iterates, multiple input can be included.
-regions = config_snakemake["study_region_name"]
+regions = normalize_to_list(config_snakemake["study_region_name"])
 technologies = config_snakemake["technologies"]
 scenario = config_snakemake["scenario"]
 weather_years = resolve_weather_years(config_snakemake.get("weather_years"))
@@ -28,9 +27,9 @@ for r in regions:
 """script to run in terminal
 The snakemake workflow will parallelize (--cores > 1) everything else but the spatial_data_prep script. 
 The resources are limited to openeo cause the api is throwing problems with parallelization. 
-    use this line ---->  snakemake --cores 4 --resources openeo_req=1
+    use this line to run for Snakefile ----> ./snakemake/run_snakemake.ps1  snakemake --cores 4 --resources openeo_req=1
 to use a specific Snakefile, use the --snakefile option
-    use this line ----> snakemake --snakefile snakemake/Snakefile_short_short --cores 4 --resources openeo_req=1
+    use this line ----> .snakemake/run_snakemake.ps1 snakemake --snakefile snakemake/Snakefile_short_short --cores 4 --resources openeo_req=1
 """
 # ---- Stage configuration ----
 stages = config_snakemake.get("stages", {})
@@ -40,6 +39,10 @@ globals().update({
     f"DO_{k.upper()}": v
     for k, v in stages.items()
 })
+
+
+# ---- Validate stage dependencies ----
+validate_stage_dependencies(stages)
 
 
 # ---- Compact includes ----

@@ -266,7 +266,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--root",
         type=Path,
-        default=Path(__file__).resolve().parent,
+        default=Path.cwd(),
         help="Project root containing data directory",
     )
     parser.add_argument(

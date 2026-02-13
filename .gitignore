@@ -26,6 +26,7 @@
 !utils/simplify.py
 !utils/gadm_levels_to_geojson.py
 !utils/delete_scenario_results.py
+!utils/results_handling.py
 !utils/results_analysis.py
 !utils/spatial_mapping.py
 # --- Raw input data ---
@@ -74,6 +75,8 @@
 !snakemake
 !snakemake/Snakefile
 !snakemake/Snakefile_simplified
+!snakemake/run_snakemake.ps1
+!snakemake/workflow_utils.py
 !snakemake/rules
 !snakemake/rules/spatial_data_prep.smk
 !snakemake/rules/exclusion.smk
