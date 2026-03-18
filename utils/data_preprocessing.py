@@ -724,24 +724,6 @@ def landcover_stats_df(region_boundary, rasterFilePath, legend_dict, pixel_size)
     return df_long
 
 
-def get_country_bounds_from_code(country_code):
-    """
-    Retrieve bounding box [minx, miny, maxx, maxy] for a country ISO2/ISO3 code.
-    """
-    gc = geonamescache.GeonamesCache()
-    countries = gc.get_countries()
-    code = country_code.upper()
-    country_info = countries.get(code)
-    if not country_info:
-        country_info = next(
-            (info for info in countries.values() if info.get("iso3", "").upper() == code),
-            None,
-        )
-    if not country_info:
-        raise ValueError(f"Country code '{country_code}' not found.")
-    bbox = country_info["bbox"]
-    return [bbox["minlng"], bbox["minlat"], bbox["maxlng"], bbox["maxlat"]]
-
 def suitability_input_check(config_path="configs/config.yaml", suitability_config_path="configs/suitability.yaml", project_root="."):
     """
     Check if all necessary available_land .tif files exist for suitability analysis.
